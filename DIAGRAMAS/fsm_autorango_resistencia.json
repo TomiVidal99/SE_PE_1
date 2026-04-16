@@ -1,0 +1,216 @@
+{
+  "states": [
+    {
+      "id": 0,
+      "x": 1385,
+      "y": -67,
+      "label": "MODO_330",
+      "action": "config_330",
+      "startAction": "",
+      "radius": 120,
+      "isStart": true,
+      "isPseudostate": false
+    },
+    {
+      "id": 1,
+      "x": 1473,
+      "y": 651,
+      "label": "MODO_10K",
+      "action": "config_10k",
+      "startAction": "",
+      "radius": 120,
+      "isStart": false,
+      "isPseudostate": false
+    },
+    {
+      "id": 2,
+      "x": 906,
+      "y": 1002,
+      "label": "MEDIR",
+      "action": "promedio_medicion()",
+      "startAction": "",
+      "radius": 120,
+      "isStart": false,
+      "isPseudostate": false
+    },
+    {
+      "id": 3,
+      "x": 1910,
+      "y": 1083,
+      "label": "MODO_1M",
+      "action": "config_1M",
+      "startAction": "",
+      "radius": 120,
+      "isStart": false,
+      "isPseudostate": false
+    },
+    {
+      "id": 5,
+      "x": 1385,
+      "y": 285,
+      "label": "",
+      "action": "",
+      "startAction": "",
+      "radius": 18,
+      "isStart": false,
+      "isPseudostate": true
+    },
+    {
+      "id": 6,
+      "x": 1622,
+      "y": 912,
+      "label": "",
+      "action": "",
+      "startAction": "",
+      "radius": 18,
+      "isStart": false,
+      "isPseudostate": true
+    },
+    {
+      "id": 7,
+      "x": 825,
+      "y": 1300,
+      "label": "",
+      "action": "",
+      "startAction": "",
+      "radius": 18,
+      "isStart": false,
+      "isPseudostate": true
+    }
+  ],
+  "transitions": [
+    {
+      "from": 0,
+      "to": 5,
+      "label": "TICK",
+      "action": "adquirir_muestra()",
+      "controlOffset": {
+        "x": 0,
+        "y": 0
+      },
+      "startAnchorAngle": null,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "from": 5,
+      "to": 1,
+      "label": "[muestra>95%]",
+      "action": "",
+      "controlOffset": {
+        "x": 0,
+        "y": 0
+      },
+      "startAnchorAngle": 2.1462209773301817,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "from": 5,
+      "to": 2,
+      "label": "[muestra<95%]",
+      "action": "",
+      "controlOffset": {
+        "x": 0,
+        "y": 0
+      },
+      "startAnchorAngle": null,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "from": 1,
+      "to": 6,
+      "label": "TICK",
+      "action": "adquirir_muestra()",
+      "controlOffset": {
+        "x": 0,
+        "y": 0
+      },
+      "startAnchorAngle": null,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "from": 6,
+      "to": 3,
+      "label": "[muestra>95%]",
+      "action": "",
+      "controlOffset": {
+        "x": 0,
+        "y": 0
+      },
+      "startAnchorAngle": null,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "from": 6,
+      "to": 2,
+      "label": "[muestra<95%]",
+      "action": "",
+      "controlOffset": {
+        "x": 0,
+        "y": 0
+      },
+      "startAnchorAngle": null,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "from": 2,
+      "to": 7,
+      "label": "FINALIZAR Y A OTRAS MAQUINAS",
+      "action": "",
+      "controlOffset": {
+        "x": 0,
+        "y": 0
+      },
+      "startAnchorAngle": null,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "from": 3,
+      "to": 2,
+      "label": "",
+      "action": "",
+      "controlOffset": {
+        "x": -6,
+        "y": 240
+      },
+      "startAnchorAngle": null,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "stateIdCounter": 8,
+  "isDarkTheme": true,
+  "simContext": {
+    "muestra": 0
+  }
+}

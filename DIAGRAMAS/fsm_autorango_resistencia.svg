@@ -1,0 +1,191 @@
+
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="1421.5157035901086"
+     height="1625"
+     viewBox="0 0 1421.5157035901086 1625">
+<rect width="100%" height="100%" fill="#1e1e1e" />
+<g transform="translate(-668.4842964098914, 247)">
+
+<path d="M 1385 53 Q 1385 160 1385 267"
+      fill="none"
+      stroke="black"
+      stroke-width="2"
+      marker-end="url(#arrow)" />
+<text x="1365" y="160"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="13"
+      fill="black">
+TICK
+</text>
+<path d="M 1375.2045601082177 300.10130316649787 Q 1410.075790345356 417.21320574911726 1444.9470205824941 534.3251083317366"
+      fill="none"
+      stroke="black"
+      stroke-width="2"
+      marker-end="url(#arrow)" />
+<text x="1390.9074871772516" y="422.92075808401916"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="13"
+      fill="black">
+[muestra&gt;95%]
+</text>
+<path d="M 1375.0009493006366 299.96726378171917 Q 1173.830643648196 601.0927526184623 972.6603379957553 902.2182414552055"
+      fill="none"
+      stroke="black"
+      stroke-width="2"
+      marker-end="url(#arrow)" />
+<text x="1157.2003505573969" y="589.9826962858365"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="13"
+      fill="black">
+[muestra&lt;95%]
+</text>
+<path d="M 1532.493667462946 755.2137396498581 Q 1572.784808671752 825.7908393511897 1613.075949880558 896.3679390525213"
+      fill="none"
+      stroke="black"
+      stroke-width="2"
+      marker-end="url(#arrow)" />
+<text x="1555.4158520634423" y="835.706450595014"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="13"
+      fill="black">
+TICK
+</text>
+<path d="M 1637.4773853891331 921.1896975747978 Q 1722.1474080641224 971.4625235380727 1806.8174307391118 1021.7353495013476"
+      fill="none"
+      stroke="black"
+      stroke-width="2"
+      marker-end="url(#arrow)" />
+<text x="1711.9366329810136" y="988.6596184148874"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="13"
+      fill="black">
+[muestra&gt;95%]
+</text>
+<path d="M 1604.1405374179192 914.2449045145073 Q 1314.6018106492288 950.6394372088957 1025.0630838805387 987.0339699032843"
+      fill="none"
+      stroke="black"
+      stroke-width="2"
+      marker-end="url(#arrow)" />
+<text x="1312.1074722997762" y="930.7955898954726"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="13"
+      fill="black">
+[muestra&lt;95%]
+</text>
+<path d="M 874.5245637339995 1117.7985186082487 Q 852.1229395869498 1200.2143704085056 829.7213154399001 1282.6302222087627"
+      fill="none"
+      stroke="black"
+      stroke-width="2"
+      marker-end="url(#arrow)" />
+<text x="832.823186485575" y="1194.9684643641722"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="13"
+      fill="black">
+FINALIZAR Y A OTRAS MAQUINAS
+</text>
+<path d="M 1790.3886333810183 1073.3500789879108 Q 1405 1162.5 1025.6113666189817 1011.6499210120892"
+      fill="none"
+      stroke="black"
+      stroke-width="2"
+      marker-end="url(#arrow)" />
+<text x="1406.6083201686815" y="1142.5647722301696"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="13"
+      fill="black">
+
+</text>
+<defs>
+<marker id="arrow" markerWidth="10" markerHeight="10"
+        refX="10" refY="3"
+        orient="auto"
+        markerUnits="strokeWidth">
+    <path d="M0,0 L0,6 L9,3 z" fill="black"/>
+</marker>
+</defs>
+<circle cx="1385" cy="-67" r="120"
+        fill="white"
+        stroke="black"
+        stroke-width="2"/>
+<text x="1385" y="-63"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="14"
+      fill="black">
+MODO_330
+</text>
+<circle cx="1473" cy="651" r="120"
+        fill="white"
+        stroke="black"
+        stroke-width="2"/>
+<text x="1473" y="655"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="14"
+      fill="black">
+MODO_10K
+</text>
+<circle cx="906" cy="1002" r="120"
+        fill="white"
+        stroke="black"
+        stroke-width="2"/>
+<text x="906" y="1006"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="14"
+      fill="black">
+MEDIR
+</text>
+<circle cx="1910" cy="1083" r="120"
+        fill="white"
+        stroke="black"
+        stroke-width="2"/>
+<text x="1910" y="1087"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="14"
+      fill="black">
+MODO_1M
+</text>
+<circle cx="1385" cy="285" r="18"
+        fill="white"
+        stroke="black"
+        stroke-width="2"/>
+<text x="1385" y="289"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="14"
+      fill="black">
+
+</text>
+<circle cx="1622" cy="912" r="18"
+        fill="white"
+        stroke="black"
+        stroke-width="2"/>
+<text x="1622" y="916"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="14"
+      fill="black">
+
+</text>
+<circle cx="825" cy="1300" r="18"
+        fill="white"
+        stroke="black"
+        stroke-width="2"/>
+<text x="825" y="1304"
+      text-anchor="middle"
+      font-family="Arial"
+      font-size="14"
+      fill="black">
+
+</text>
+</g>
+</svg>
