@@ -1,0 +1,260 @@
+{
+  "states": [
+    {
+      "id": 1,
+      "x": 824,
+      "y": 50,
+      "label": "MENU_INFO",
+      "action": "imprimir_info()",
+      "startAction": "configurar_parametro(DEFAULT)\nconfigurar_modo_(DEFAULT)",
+      "radius": 80,
+      "isStart": true,
+      "isPseudostate": false
+    },
+    {
+      "id": 2,
+      "x": 826,
+      "y": 299,
+      "label": "MENU_MODO",
+      "action": "imprimir_menu_modo()",
+      "startAction": "",
+      "radius": 85,
+      "isStart": false,
+      "isPseudostate": false
+    },
+    {
+      "id": 3,
+      "x": 828,
+      "y": 633,
+      "label": "MENU_PARAM",
+      "action": "imprimir_menu_parametros()",
+      "startAction": "",
+      "radius": 89,
+      "isStart": false,
+      "isPseudostate": false
+    },
+    {
+      "id": 6,
+      "x": 173,
+      "y": 579,
+      "label": "MOSTRAR_MED",
+      "action": "imprmir_medicion()",
+      "startAction": "",
+      "radius": 100,
+      "isStart": false,
+      "isPseudostate": false
+    },
+    {
+      "id": 11,
+      "x": 175,
+      "y": 280,
+      "label": "MEDIR",
+      "action": "",
+      "startAction": "",
+      "radius": 45,
+      "isStart": false,
+      "isPseudostate": false
+    },
+    {
+      "id": 12,
+      "x": 1166,
+      "y": 624,
+      "label": "",
+      "action": "",
+      "startAction": "",
+      "radius": 18,
+      "isStart": false,
+      "isPseudostate": true
+    }
+  ],
+  "transitions": [
+    {
+      "from": 11,
+      "to": 6,
+      "label": "TICK1ms[parametro=r]",
+      "action": "medir_r()",
+      "controlOffset": {
+        "x": -92,
+        "y": -14
+      },
+      "startAnchorAngle": 2.3191743743184148,
+      "endAnchorAngle": -2.0668400051610747,
+      "labelOffset": {
+        "x": 53,
+        "y": 35
+      }
+    },
+    {
+      "from": 11,
+      "to": 6,
+      "label": "TICK1ms[parametro=c]",
+      "action": "medir_c()",
+      "controlOffset": {
+        "x": 88,
+        "y": 0
+      },
+      "startAnchorAngle": 0.844153986113171,
+      "endAnchorAngle": -1.0434054052614035,
+      "labelOffset": {
+        "x": 68,
+        "y": -12
+      }
+    },
+    {
+      "from": 6,
+      "to": 11,
+      "label": "TICK100ms[modo=continuo]",
+      "action": "",
+      "controlOffset": {
+        "x": -204,
+        "y": -30
+      },
+      "startAnchorAngle": -2.791547765344647,
+      "endAnchorAngle": 2.922923707715851,
+      "labelOffset": {
+        "x": -80,
+        "y": -22
+      }
+    },
+    {
+      "from": 6,
+      "to": 1,
+      "label": "BTN_MENU",
+      "action": "",
+      "controlOffset": {
+        "x": 32,
+        "y": 166
+      },
+      "startAnchorAngle": -0.10881220481724505,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": -3,
+        "y": 18
+      }
+    },
+    {
+      "from": 1,
+      "to": 2,
+      "label": "nuevo_comando[comando=any]",
+      "action": "",
+      "controlOffset": {
+        "x": 0,
+        "y": 0
+      },
+      "startAnchorAngle": null,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 32,
+        "y": 18
+      }
+    },
+    {
+      "from": 2,
+      "to": 3,
+      "label": "nuevo_comando[comando=continuo]",
+      "action": "configurar_modo(continuo)",
+      "controlOffset": {
+        "x": 86,
+        "y": 8
+      },
+      "startAnchorAngle": 0.9975419164019239,
+      "endAnchorAngle": -1.015617750674292,
+      "labelOffset": {
+        "x": 84,
+        "y": -11
+      }
+    },
+    {
+      "from": 2,
+      "to": 3,
+      "label": "nuevo_comando[comando=unico]",
+      "action": "configurar_modo(unico)",
+      "controlOffset": {
+        "x": -96,
+        "y": 0
+      },
+      "startAnchorAngle": 1.9902737885502577,
+      "endAnchorAngle": -1.9698572753710306,
+      "labelOffset": {
+        "x": -58,
+        "y": 41
+      }
+    },
+    {
+      "from": 12,
+      "to": 1,
+      "label": "",
+      "action": "",
+      "controlOffset": {
+        "x": 218,
+        "y": -200
+      },
+      "startAnchorAngle": -1.2120256565243244,
+      "endAnchorAngle": 0.02499479361892016,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "from": 3,
+      "to": 12,
+      "label": "nuevo_comando[comando=r]",
+      "action": "configurar_parametro(r)",
+      "controlOffset": {
+        "x": 4,
+        "y": -64
+      },
+      "startAnchorAngle": -0.38650630511392003,
+      "endAnchorAngle": -2.4668517113662407,
+      "labelOffset": {
+        "x": 17,
+        "y": -39
+      }
+    },
+    {
+      "from": 3,
+      "to": 12,
+      "label": "nuevo_comando[comando=c]",
+      "action": "configurar_parametro(c)",
+      "controlOffset": {
+        "x": 30,
+        "y": 72
+      },
+      "startAnchorAngle": 0.4160645057238227,
+      "endAnchorAngle": 2.137525544318403,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "from": 1,
+      "to": 11,
+      "label": "BTN_MENU",
+      "action": "configurar()",
+      "controlOffset": {
+        "x": -204,
+        "y": -260
+      },
+      "startAnchorAngle": -2.694988848583985,
+      "endAnchorAngle": -1.5208379310729538,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    }
+  ],
+  "stateIdCounter": 14,
+  "isDarkTheme": true,
+  "simContext": {
+    "parametro": 0,
+    "r": 0,
+    "c": 0,
+    "modo": 0,
+    "continuo": 0,
+    "comando": 0,
+    "any": 0,
+    "unico": 0
+  }
+}
