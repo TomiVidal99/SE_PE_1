@@ -1,0 +1,3 @@
+../Core/Src/libreria.c:26:10:ADC_muestrear	24	static
+../Core/Src/libreria.c:44:6:UART_mostrar_menu	368	static
+../Core/Src/libreria.c:116:10:FSM_general	16	static
