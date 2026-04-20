@@ -64,7 +64,11 @@ static void MX_ADC1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
-const char msjBuffer[MESSAGE_BUFFER_LENGTH];
+
+volatile Configuracion_t config = {
+    .parametro = DEFAULT_PARAMETRO,
+    .modo = DEFAULT_MODO
+};
 
 /* USER CODE END 0 */
 
@@ -104,7 +108,6 @@ int main(void)
   //char* msj = "test\r\n";
   //HAL_UART_Transmit(&huart1, msj, 6, HAL_MAX_DELAY);
   HAL_ADCEx_Calibration_Start(&hadc1);
-  char buffer_uart[5];
   /* USER CODE END 2 */
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */

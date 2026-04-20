@@ -1,3 +1,5 @@
 ../Core/Src/libreria.c:26:10:ADC_muestrear	2
 ../Core/Src/libreria.c:44:6:UART_mostrar_menu	5
-../Core/Src/libreria.c:116:10:FSM_general	11
+../Core/Src/libreria.c:110:9:UART_leer_comando	7
+../Core/Src/libreria.c:146:6:UART_decodificar_comando	2
+../Core/Src/libreria.c:184:10:FSM_general	11

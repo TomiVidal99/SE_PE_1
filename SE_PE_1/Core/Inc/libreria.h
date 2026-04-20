@@ -15,5 +15,6 @@ typedef enum {
 
 uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc);
 void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart);
+Error_t UART_leer_comando(UART_HandleTypeDef *handle_uart, char *comando);
 
 #endif

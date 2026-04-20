@@ -1,3 +1,5 @@
 ../Core/Src/libreria.c:26:10:ADC_muestrear	24	static
 ../Core/Src/libreria.c:44:6:UART_mostrar_menu	368	static
-../Core/Src/libreria.c:116:10:FSM_general	16	static
+../Core/Src/libreria.c:110:9:UART_leer_comando	24	static
+../Core/Src/libreria.c:146:6:UART_decodificar_comando	24	static
+../Core/Src/libreria.c:184:10:FSM_general	16	static

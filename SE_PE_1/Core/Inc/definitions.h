@@ -8,17 +8,28 @@
 #ifndef INC_DEFINITIONS_H_
 #define INC_DEFINITIONS_H_
 
+//Defaults al incializar
+
+
+#define DEFAULT_MODO UNICO
+#define DEFAULT_PARAMETRO RESISTENCIA
+
 typedef enum {
-	UNICO,
+	UNICO = 1,
 	CONTINUO,
 	RAFAGA, // POSIBLE MEJORA
 } Modo_t;
 
 typedef enum {
-	RESISTENCIA,
+	RESISTENCIA = 1,
 	CAPACITANCIA,
 	TENSION, // POSIBLE MEJORA
 } Parametro_t;
+
+typedef enum {
+	MODO,
+	PARAMETRO,
+} Configurables_t;
 
 typedef struct {
 	Parametro_t parametro;
@@ -39,5 +50,11 @@ typedef enum {
 	TICK_100MS,
 	BOTON_MENU,
 } Event_t;
+
+typedef enum {
+	ERROR_OK,
+	ERROR_NULL,
+	ERROR_INVALIDO,
+}Error_t;
 
 #endif /* INC_DEFINITIONS_H_ */

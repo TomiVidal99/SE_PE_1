@@ -107,17 +107,86 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
 	}
 }
 
-//void UART_leer_comando(UART_HandleTypeDef *handle_huart){
-//	char comando[];
-//	HAL_UART_Receive(huart, , Size, Timeout);
-//
-//}
+Error_t UART_leer_comando(UART_HandleTypeDef *handle_uart, char *comando){
+
+	/*
+	Esta funcion lee byte a byte por UART. Lo hago asi para poder manejar
+	mas facil errores de inpts del ususario
+
+	El comando resultante queda modificado (se paso por referencia)
+	*/
+
+	uint8_t i = 0;
+	char com; // Buffer de 1 byte
+
+	while (i < sizeof(comando) - 1)
+	{
+		HAL_UART_Receive(handle_uart, (uint8_t*)&com, 1, HAL_MAX_DELAY);
+
+		if (com == '\r' || com == '\n') //si detecto enter dejo de leer
+			break;
+
+		comando[i++] = com;
+	}
+
+	comando[i] = '\0';  // cierro string
+
+	//Checkeo errores de input
+
+	if (i == 1 && (comando[0] == '1' || comando[0] == '2'))
+	{
+		 return ERROR_OK;
+	}
+	else
+	{
+	     return ERROR_INVALIDO;
+	}
+}
+
+void UART_decodificar_comando(UART_HandleTypeDef *handle_uart, Configurables_t configurable){
+
+	/*
+	Recibe comando por uart (bloqueante) y modifica el struct "configuracion" acordemente.
+	El parametro "configurable" indica si se va a modificar "modo" (1) o "parametro" (2).
+	odria hacerlos enums pero capaz sea para mas quilombo
+	Esta funcion detecta comandos malos (nulos o invalidos)
+	*/
+
+	char buffer_comando[4];
+	UART_leer_comando(handle_uart, buffer_comando);
+	uint32_t comando = buffer_comando[0] - '0'; //Dejo el comando como uint
+
+	switch (configurable){
+
+		case MODO:
+
+			if (comando == UNICO) { //Modo disparo unico
+
+			}
+			else if (comando == CONTINUO) {
+			}
+
+		break;
+
+		case PARAMETRO:
+
+			if (comando == RESISTENCIA) {
+			    // Modo resistencia
+			}
+			else if (comando == CAPACITANCIA) {
+			    // Modo capacitancia
+			}
+		break;
+	}
+
+}
 
 Estado_t FSM_general(Estado_t estado, Event_t evento) {
 	switch(estado) {
 	case MENU_INFO:
 		switch(evento) {
 		case NUEVO_COMANDO:
+
 			break;
 		case TICK_1MS:
 			break;
@@ -175,5 +244,8 @@ Estado_t FSM_general(Estado_t estado, Event_t evento) {
 					break;
 				}
 			break;
+
+				default:
+				break;
 	}
 }

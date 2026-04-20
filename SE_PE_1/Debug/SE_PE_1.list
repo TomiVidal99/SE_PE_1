@@ -27,25 +27,25 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000029  00000000  00000000  0000400c  2**0
                   CONTENTS, READONLY
- 12 .debug_info   00008d9b  00000000  00000000  00004035  2**0
+ 12 .debug_info   00008f4d  00000000  00000000  00004035  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 00001a58  00000000  00000000  0000cdd0  2**0
+ 13 .debug_abbrev 00001a63  00000000  00000000  0000cf82  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 000007d8  00000000  00000000  0000e828  2**3
+ 14 .debug_aranges 000007e8  00000000  00000000  0000e9e8  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_rnglists 000005fd  00000000  00000000  0000f000  2**0
+ 15 .debug_rnglists 00000609  00000000  00000000  0000f1d0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  000177a3  00000000  00000000  0000f5fd  2**0
+ 16 .debug_macro  000177b7  00000000  00000000  0000f7d9  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00009972  00000000  00000000  00026da0  2**0
+ 17 .debug_line   00009a14  00000000  00000000  00026f90  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00086f79  00000000  00000000  00030712  2**0
+ 18 .debug_str    00087068  00000000  00000000  000309a4  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  000b768b  2**0
+ 19 .comment      00000043  00000000  00000000  000b7a0c  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00001d18  00000000  00000000  000b76d0  2**2
+ 20 .debug_frame  00001d5c  00000000  00000000  000b7a50  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_line_str 00000055  00000000  00000000  000b93e8  2**0
+ 21 .debug_line_str 00000055  00000000  00000000  000b97ac  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -225,55 +225,55 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
 int main(void)
 {
  800028c:	b580      	push	{r7, lr}
- 800028e:	b082      	sub	sp, #8
- 8000290:	af00      	add	r7, sp, #0
+ 800028e:	af00      	add	r7, sp, #0
   /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
- 8000292:	f000 fa4f 	bl	8000734 <HAL_Init>
+ 8000290:	f000 fa50 	bl	8000734 <HAL_Init>
   /* USER CODE BEGIN Init */
 
   /* USER CODE END Init */
 
   /* Configure the system clock */
   SystemClock_Config();
- 8000296:	f000 f817 	bl	80002c8 <SystemClock_Config>
+ 8000294:	f000 f818 	bl	80002c8 <SystemClock_Config>
   /* USER CODE BEGIN SysInit */
 
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
- 800029a:	f000 f8d9 	bl	8000450 <MX_GPIO_Init>
+ 8000298:	f000 f8da 	bl	8000450 <MX_GPIO_Init>
   MX_USART1_UART_Init();
- 800029e:	f000 f8ad 	bl	80003fc <MX_USART1_UART_Init>
+ 800029c:	f000 f8ae 	bl	80003fc <MX_USART1_UART_Init>
   MX_ADC1_Init();
- 80002a2:	f000 f86d 	bl	8000380 <MX_ADC1_Init>
+ 80002a0:	f000 f86e 	bl	8000380 <MX_ADC1_Init>
   /* USER CODE BEGIN 2 */
 
   //char* msj = "test\r\n";
   //HAL_UART_Transmit(&huart1, msj, 6, HAL_MAX_DELAY);
   HAL_ADCEx_Calibration_Start(&hadc1);
- 80002a6:	4806      	ldr	r0, [pc, #24]	@ (80002c0 <main+0x34>)
- 80002a8:	f000 fd36 	bl	8000d18 <HAL_ADCEx_Calibration_Start>
+ 80002a4:	4806      	ldr	r0, [pc, #24]	@ (80002c0 <main+0x34>)
+ 80002a6:	f000 fd37 	bl	8000d18 <HAL_ADCEx_Calibration_Start>
   while (1)
   {
 //	uint32_t muestra = ADC_muestrear(&hadc1);
 //	sprintf(buffer_uart, "%lu\r\n", muestra);
 //	HAL_UART_Transmit(&huart1, (uint8_t*)buffer_uart, strlen(buffer_uart), HAL_MAX_DELAY);
 	UART_mostrar_menu(menu_parametro, &huart1);
- 80002ac:	4905      	ldr	r1, [pc, #20]	@ (80002c4 <main+0x38>)
- 80002ae:	2000      	movs	r0, #0
- 80002b0:	f7ff ff54 	bl	800015c <UART_mostrar_menu>
+ 80002aa:	4906      	ldr	r1, [pc, #24]	@ (80002c4 <main+0x38>)
+ 80002ac:	2000      	movs	r0, #0
+ 80002ae:	f7ff ff55 	bl	800015c <UART_mostrar_menu>
 	HAL_Delay(10000);
- 80002b4:	f242 7010 	movw	r0, #10000	@ 0x2710
- 80002b8:	f000 fa9e 	bl	80007f8 <HAL_Delay>
+ 80002b2:	f242 7010 	movw	r0, #10000	@ 0x2710
+ 80002b6:	f000 fa9f 	bl	80007f8 <HAL_Delay>
 	UART_mostrar_menu(menu_parametro, &huart1);
- 80002bc:	bf00      	nop
- 80002be:	e7f5      	b.n	80002ac <main+0x20>
+ 80002ba:	bf00      	nop
+ 80002bc:	e7f5      	b.n	80002aa <main+0x1e>
+ 80002be:	bf00      	nop
  80002c0:	20000028 	.word	0x20000028
  80002c4:	20000058 	.word	0x20000058
 
