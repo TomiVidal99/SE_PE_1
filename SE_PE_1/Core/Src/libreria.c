@@ -51,67 +51,72 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
 	HAL_UART_Transmit(handle_uart, (uint8_t*)clear, sizeof(clear)-1, HAL_MAX_DELAY);
 	switch (menu){
 
-	case menu_info:
-		// Esto dsp lo midifico para que muestre modo y parametro dinamicamente
-		char buffer_uart_info[] =
-		"\r\n"
-		"====================================\r\n"
-		"             MENU INFO              \r\n"
-		"====================================\r\n"
-		"\r\n"
-		"Estado actual:\r\n"
-		"  • Modo      : blabla\r\n"
-		"  • Parametro : blabla\r\n"
-		"\r\n"
-		"------------------------------------\r\n"
-		"Seleccione una opcion:\r\n"
-		"\r\n"
-		"  [1] Cambiar modo\r\n"
-		"  [2] Cambiar parametro\r\n"
-		"\r\n"
-		"------------------------------------\r\n"
-		"> ";
-		HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_info, strlen(buffer_uart_info), HAL_MAX_DELAY);
+		case menu_info:
+			// Esto dsp lo midifico para que muestre modo y parametro dinamicamente
+			char buffer_uart_info[] =
+			"\r\n"
+			"====================================\r\n"
+			"             MENU INFO              \r\n"
+			"====================================\r\n"
+			"\r\n"
+			"Estado actual:\r\n"
+			"  • Modo      : blabla\r\n"
+			"  • Parametro : blabla\r\n"
+			"\r\n"
+			"------------------------------------\r\n"
+			"Seleccione una opcion:\r\n"
+			"\r\n"
+			"  [1] Cambiar modo\r\n"
+			"  [2] Cambiar parametro\r\n"
+			"\r\n"
+			"------------------------------------\r\n"
+			"> ";
+			HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_info, strlen(buffer_uart_info), HAL_MAX_DELAY);
 
-	break;
+		break;
 
-	case menu_modo:
+		case menu_modo:
 
-		char buffer_uart_modo[] =
-		"====================================\r\n"
-		"           MENU MODO                \r\n"
-		"====================================\r\n"
-		"Seleccione el modo:\r\n"
-		"\r\n"
-		"  [1] Disparo unico\r\n"
-		"  [2] Disparo continuo\r\n"
-		"\r\n"
-		"------------------------------------\r\n"
-		"> ";
-		HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_modo, strlen(buffer_uart_modo), HAL_MAX_DELAY);
+			char buffer_uart_modo[] =
+			"====================================\r\n"
+			"           MENU MODO                \r\n"
+			"====================================\r\n"
+			"Seleccione el modo:\r\n"
+			"\r\n"
+			"  [1] Disparo unico\r\n"
+			"  [2] Disparo continuo\r\n"
+			"\r\n"
+			"------------------------------------\r\n"
+			"> ";
+			HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_modo, strlen(buffer_uart_modo), HAL_MAX_DELAY);
 
-	break;
+		break;
 
-	case menu_parametro:
+		case menu_parametro:
 
-		char buffer_uart_parametro[] =
-		"====================================\r\n"
-		"         MENU PARAMETRO             \r\n"
-		"====================================\r\n"
-		"Seleccione el parametro a medir:\r\n"
-		"\r\n"
-		"  [1] Resistencia\r\n"
-		"  [2] Capacitancia\r\n"
-		"\r\n"
-		"------------------------------------\r\n"
-		"> ";
-		HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_parametro, strlen(buffer_uart_parametro), HAL_MAX_DELAY);
+			char buffer_uart_parametro[] =
+			"====================================\r\n"
+			"         MENU PARAMETRO             \r\n"
+			"====================================\r\n"
+			"Seleccione el parametro a medir:\r\n"
+			"\r\n"
+			"  [1] Resistencia\r\n"
+			"  [2] Capacitancia\r\n"
+			"\r\n"
+			"------------------------------------\r\n"
+			"> ";
+			HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_parametro, strlen(buffer_uart_parametro), HAL_MAX_DELAY);
 
-	break;
+		break;
 	}
 }
 
 Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart){
+
+	// Es raro que se lea byte a byte, sería mejor tener un buffer de 64 bytes
+	// por ejemplo, y luego procesarlo caracter a caracter.
+	// la lógica de procesamiento puede ser la misma, pero cambiaría el
+	// tamaño del buffer de entrada.
 
 	/*
 	Esta funcion lee byte a byte por UART. Lo hago asi para poder manejar
@@ -145,6 +150,8 @@ Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart){
 
 }
 
+// creo que esto está mal, set_configuracion no debería llamar a comando, sino
+// recibirlo por parámetro, hay que acotar la funcionalidad
 void set_configuracion(UART_HandleTypeDef *handle_uart, Configurables_t configurable){
 
 	/*
@@ -182,6 +189,7 @@ void set_configuracion(UART_HandleTypeDef *handle_uart, Configurables_t configur
 }
 
 void FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uart) {
+
 	switch(estado) {
 
 	case MENU_INFO:
@@ -190,6 +198,12 @@ void FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uar
 
 		switch(evento) {
 			case NUEVO_COMANDO:
+				// y acá no se perdería el modo al que va?
+				// tendríamos hacer que vaya a MENU_MODO
+				// pero sabiendo si es resistencia o capacidad no?
+
+				// yo haría que la configuración se actualice acá,
+				// set_configuracion(handle_uart, MODO, &config);
 				estado = MENU_MODO;
 				break;
 
@@ -207,7 +221,6 @@ void FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uar
 		switch(evento) {
 			case NUEVO_COMANDO:
 				set_configuracion(handle_uart, MODO, &config);
-
 				break;
 			case BOTON_MENU:
 				break;
