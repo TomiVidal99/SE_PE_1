@@ -13,8 +13,16 @@ typedef enum {
 
 }Menu_t;
 
-uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc);
+typedef enum {
+	ANY,
+	OPCION_1,
+	OPCION_2,
+
+}Comando_t;
+
 void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart);
-Error_t UART_leer_comando(UART_HandleTypeDef *handle_uart, char *comando);
+Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart);
+uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc);
+void set_configuracion(UART_HandleTypeDef *handle_uart, Configurables_t configurable, Configuracion_t *config);
 
 #endif

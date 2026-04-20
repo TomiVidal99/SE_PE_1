@@ -70,6 +70,8 @@ volatile Configuracion_t config = {
     .modo = DEFAULT_MODO
 };
 
+Estado_t estado_actual = MENU_INFO;
+
 /* USER CODE END 0 */
 
 /**

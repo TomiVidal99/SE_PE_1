@@ -9,7 +9,7 @@
 
 #define ADC_N_MUESTRAS 32
 
-
+extern volatile Configuracion_t config;
 /*
 void ADC_calibrar(ADC_HandleTypeDef *handle_adc){
 
@@ -43,7 +43,11 @@ uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc){
 //UART
 void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
 
-	char clear[] = "\033[2J\033[H";
+	/*
+	Toma como parametro el tipo Menu_t y lo imprime en pantalla a traves de la uart especificada
+	*/
+
+	char clear[] = "\033[2J\033[H"; // Clear
 	HAL_UART_Transmit(handle_uart, (uint8_t*)clear, sizeof(clear)-1, HAL_MAX_DELAY);
 	switch (menu){
 
@@ -107,7 +111,7 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
 	}
 }
 
-Error_t UART_leer_comando(UART_HandleTypeDef *handle_uart, char *comando){
+Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart){
 
 	/*
 	Esta funcion lee byte a byte por UART. Lo hago asi para poder manejar
@@ -116,8 +120,9 @@ Error_t UART_leer_comando(UART_HandleTypeDef *handle_uart, char *comando){
 	El comando resultante queda modificado (se paso por referencia)
 	*/
 
-	uint8_t i = 0;
+	char comando[4];//Buffer de 4 bytes
 	char com; // Buffer de 1 byte
+	uint8_t i = 0;
 
 	while (i < sizeof(comando) - 1)
 	{
@@ -131,72 +136,87 @@ Error_t UART_leer_comando(UART_HandleTypeDef *handle_uart, char *comando){
 
 	comando[i] = '\0';  // cierro string
 
-	//Checkeo errores de input
+	//Retorno comando correspondiente
+	if (i == 1 && (comando[0] == '1')) return OPCION_1;
 
-	if (i == 1 && (comando[0] == '1' || comando[0] == '2'))
-	{
-		 return ERROR_OK;
-	}
-	else
-	{
-	     return ERROR_INVALIDO;
-	}
+	else if (i == 1 && (comando[0] == '2')) return OPCION_2;
+
+	else return ANY;
+
 }
 
-void UART_decodificar_comando(UART_HandleTypeDef *handle_uart, Configurables_t configurable){
+void set_configuracion(UART_HandleTypeDef *handle_uart, Configurables_t configurable){
 
 	/*
-	Recibe comando por uart (bloqueante) y modifica el struct "configuracion" acordemente.
-	El parametro "configurable" indica si se va a modificar "modo" (1) o "parametro" (2).
-	odria hacerlos enums pero capaz sea para mas quilombo
-	Esta funcion detecta comandos malos (nulos o invalidos)
+	Modifica la estructura "config", seteando el modo y el parametro leyendo comando por uart.
+	Configurable: indica si se quiere configurar modo o parmetro
 	*/
 
-	char buffer_comando[4];
-	UART_leer_comando(handle_uart, buffer_comando);
-	uint32_t comando = buffer_comando[0] - '0'; //Dejo el comando como uint
+	Comando_t comando = UART_leer_comando(handle_uart);
+//	uint32_t comando = buffer_comando[0] - '0'; //Dejo el comando como uint
 
 	switch (configurable){
 
 		case MODO:
 
-			if (comando == UNICO) { //Modo disparo unico
-
+			if (comando == OPCION_1) {
+				config->modo = UNICO;
 			}
-			else if (comando == CONTINUO) {
+			else if (comando == OPCION_2) {
+				config->modo = CONTINUO;
 			}
 
 		break;
 
 		case PARAMETRO:
 
-			if (comando == RESISTENCIA) {
-			    // Modo resistencia
+			if (comando == OPCION_1) {
+				config->parametro = RESISTENCIA;
 			}
-			else if (comando == CAPACITANCIA) {
-			    // Modo capacitancia
+			else if (comando == OPCION_2) {
+				config->parametro = CAPACITANCIA;
 			}
 		break;
 	}
 
 }
 
-Estado_t FSM_general(Estado_t estado, Event_t evento) {
+void FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uart) {
 	switch(estado) {
-	case MENU_INFO:
-		switch(evento) {
-		case NUEVO_COMANDO:
 
-			break;
-		case TICK_1MS:
-			break;
-		case TICK_100MS:
-			break;
-		case BOTON_MENU:
-			break;
-		}
+	case MENU_INFO:
+
+		UART_mostrar_menu(menu_info, handle_uart);
+
+		switch(evento) {
+			case NUEVO_COMANDO:
+				estado = MENU_MODO;
+				break;
+
+			case BOTON_MENU:
+				break;
+
+			default:
+				break;
+			}
+
+	case MENU_MODO:
+
+		UART_mostrar_menu(menu_modo, handle_uart);
+
+		switch(evento) {
+			case NUEVO_COMANDO:
+				set_configuracion(handle_uart, MODO, &config);
+
+				break;
+			case BOTON_MENU:
+				break;
+			default:
+				break;
+			}
 		break;
-		case MENU_MODO:
+
+		case MENU_PARAM:
 			switch(evento) {
 			case NUEVO_COMANDO:
 				break;
@@ -208,44 +228,32 @@ Estado_t FSM_general(Estado_t estado, Event_t evento) {
 				break;
 			}
 			break;
-			case MENU_PARAM:
-				switch(evento) {
-				case NUEVO_COMANDO:
-					break;
-				case TICK_1MS:
-					break;
-				case TICK_100MS:
-					break;
-				case BOTON_MENU:
-					break;
-				}
+		case MOSTRAR_MEDICION:
+			switch(evento) {
+			case NUEVO_COMANDO:
 				break;
-			case MOSTRAR_MEDICION:
-				switch(evento) {
-				case NUEVO_COMANDO:
-					break;
-				case TICK_1MS:
-					break;
-				case TICK_100MS:
-					break;
-				case BOTON_MENU:
-					break;
-				}
-			break;
-			case MEDIR:
-				switch(evento) {
-				case NUEVO_COMANDO:
-					break;
-				case TICK_1MS:
-					break;
-				case TICK_100MS:
-					break;
-				case BOTON_MENU:
-					break;
-				}
-			break;
+			case TICK_1MS:
+				break;
+			case TICK_100MS:
+				break;
+			case BOTON_MENU:
+				break;
+			}
+		break;
+		case MEDIR:
+			switch(evento) {
+			case NUEVO_COMANDO:
+				break;
+			case TICK_1MS:
+				break;
+			case TICK_100MS:
+				break;
+			case BOTON_MENU:
+				break;
+			}
+		break;
 
-				default:
-				break;
+			default:
+			break;
 	}
 }
