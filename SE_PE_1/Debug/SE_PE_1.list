@@ -27,25 +27,25 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000029  00000000  00000000  0000400c  2**0
                   CONTENTS, READONLY
- 12 .debug_info   00008ff5  00000000  00000000  00004035  2**0
+ 12 .debug_info   00009010  00000000  00000000  00004035  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 13 .debug_abbrev 00001a62  00000000  00000000  0000d02a  2**0
+ 13 .debug_abbrev 00001a73  00000000  00000000  0000d045  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 14 .debug_aranges 000007e8  00000000  00000000  0000ea90  2**3
+ 14 .debug_aranges 000007f8  00000000  00000000  0000eab8  2**3
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 15 .debug_rnglists 00000609  00000000  00000000  0000f278  2**0
+ 15 .debug_rnglists 00000615  00000000  00000000  0000f2b0  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 16 .debug_macro  000177b7  00000000  00000000  0000f881  2**0
+ 16 .debug_macro  000177b7  00000000  00000000  0000f8c5  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   00009a44  00000000  00000000  00027038  2**0
+ 17 .debug_line   00009a85  00000000  00000000  0002707c  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    00087051  00000000  00000000  00030a7c  2**0
+ 18 .debug_str    0008706f  00000000  00000000  00030b01  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000043  00000000  00000000  000b7acd  2**0
+ 19 .comment      00000043  00000000  00000000  000b7b70  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00001d5c  00000000  00000000  000b7b10  2**2
+ 20 .debug_frame  00001d94  00000000  00000000  000b7bb4  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 21 .debug_line_str 00000055  00000000  00000000  000b986c  2**0
+ 21 .debug_line_str 00000055  00000000  00000000  000b9948  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -134,14 +134,14 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
  80001b2:	d03f      	beq.n	8000234 <UART_mostrar_menu+0xd8>
  80001b4:	2b01      	cmp	r3, #1
  80001b6:	d01f      	beq.n	80001f8 <UART_mostrar_menu+0x9c>
-		"> ";
-		HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_parametro, strlen(buffer_uart_parametro), HAL_MAX_DELAY);
+			"> ";
+			HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_parametro, strlen(buffer_uart_parametro), HAL_MAX_DELAY);
 
-	break;
+		break;
 	}
 }
  80001b8:	e05a      	b.n	8000270 <UART_mostrar_menu+0x114>
-		char buffer_uart_info[] =
+			char buffer_uart_info[] =
  80001ba:	f507 73b4 	add.w	r3, r7, #360	@ 0x168
  80001be:	f5a3 73ae 	sub.w	r3, r3, #348	@ 0x15c
  80001c2:	4a2f      	ldr	r2, [pc, #188]	@ (8000280 <UART_mostrar_menu+0x124>)
@@ -150,7 +150,7 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
  80001c8:	f44f 73aa 	mov.w	r3, #340	@ 0x154
  80001cc:	461a      	mov	r2, r3
  80001ce:	f002 f89d 	bl	800230c <memcpy>
-		HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_info, strlen(buffer_uart_info), HAL_MAX_DELAY);
+			HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_info, strlen(buffer_uart_info), HAL_MAX_DELAY);
  80001d2:	f107 030c 	add.w	r3, r7, #12
  80001d6:	4618      	mov	r0, r3
  80001d8:	f7ff ffb8 	bl	800014c <strlen>
@@ -162,9 +162,9 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
  80001ec:	f04f 33ff 	mov.w	r3, #4294967295	@ 0xffffffff
  80001f0:	6800      	ldr	r0, [r0, #0]
  80001f2:	f001 fe8b 	bl	8001f0c <HAL_UART_Transmit>
-	break;
+		break;
  80001f6:	e03b      	b.n	8000270 <UART_mostrar_menu+0x114>
-		char buffer_uart_modo[] =
+			char buffer_uart_modo[] =
  80001f8:	f507 73b4 	add.w	r3, r7, #360	@ 0x168
  80001fc:	f5a3 73ae 	sub.w	r3, r3, #348	@ 0x15c
  8000200:	4a20      	ldr	r2, [pc, #128]	@ (8000284 <UART_mostrar_menu+0x128>)
@@ -173,7 +173,7 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
  8000206:	23e1      	movs	r3, #225	@ 0xe1
  8000208:	461a      	mov	r2, r3
  800020a:	f002 f87f 	bl	800230c <memcpy>
-		HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_modo, strlen(buffer_uart_modo), HAL_MAX_DELAY);
+			HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_modo, strlen(buffer_uart_modo), HAL_MAX_DELAY);
  800020e:	f107 030c 	add.w	r3, r7, #12
  8000212:	4618      	mov	r0, r3
  8000214:	f7ff ff9a 	bl	800014c <strlen>
@@ -185,9 +185,9 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
  8000228:	f04f 33ff 	mov.w	r3, #4294967295	@ 0xffffffff
  800022c:	6800      	ldr	r0, [r0, #0]
  800022e:	f001 fe6d 	bl	8001f0c <HAL_UART_Transmit>
-	break;
+		break;
  8000232:	e01d      	b.n	8000270 <UART_mostrar_menu+0x114>
-		char buffer_uart_parametro[] =
+			char buffer_uart_parametro[] =
  8000234:	f507 73b4 	add.w	r3, r7, #360	@ 0x168
  8000238:	f5a3 73ae 	sub.w	r3, r3, #348	@ 0x15c
  800023c:	4a12      	ldr	r2, [pc, #72]	@ (8000288 <UART_mostrar_menu+0x12c>)
@@ -196,7 +196,7 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
  8000242:	23e8      	movs	r3, #232	@ 0xe8
  8000244:	461a      	mov	r2, r3
  8000246:	f002 f861 	bl	800230c <memcpy>
-		HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_parametro, strlen(buffer_uart_parametro), HAL_MAX_DELAY);
+			HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_parametro, strlen(buffer_uart_parametro), HAL_MAX_DELAY);
  800024a:	f107 030c 	add.w	r3, r7, #12
  800024e:	4618      	mov	r0, r3
  8000250:	f7ff ff7c 	bl	800014c <strlen>
@@ -208,7 +208,7 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
  8000264:	f04f 33ff 	mov.w	r3, #4294967295	@ 0xffffffff
  8000268:	6800      	ldr	r0, [r0, #0]
  800026a:	f001 fe4f 	bl	8001f0c <HAL_UART_Transmit>
-	break;
+		break;
  800026e:	bf00      	nop
 }
  8000270:	bf00      	nop
@@ -414,11 +414,11 @@ static void MX_ADC1_Init(void)
  8000380:	b580      	push	{r7, lr}
  8000382:	b084      	sub	sp, #16
  8000384:	af00      	add	r7, sp, #0
-
   /* USER CODE BEGIN ADC1_Init 0 */
 
   /* USER CODE END ADC1_Init 0 */
 
+  //Configuracion del canal del ADC
   ADC_ChannelConfTypeDef sConfig = {0};
  8000386:	1d3b      	adds	r3, r7, #4
  8000388:	2200      	movs	r2, #0

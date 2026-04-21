@@ -23,6 +23,13 @@ void ADC_calibrar(ADC_HandleTypeDef *handle_adc){
 }
 */
 
+void medir_c(){
+
+}
+void medir_r(){
+
+}
+
 uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc){
 
 	//Realiza una lectura de ADC_N_MUESTRAS muestras y devuelve el promedio
@@ -117,60 +124,66 @@ Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart){
 	// por ejemplo, y luego procesarlo caracter a caracter.
 	// la lógica de procesamiento puede ser la misma, pero cambiaría el
 	// tamaño del buffer de entrada.
-
+	//RESPUESTA: pasa que para que quiero leer 64 bytes si el usuario pondria como mucho 1 o 2?
+	// es mas, le puse 4 bytes (3 efectivos contando el \0) para que si se detecta que puso sin
+	// querer algo de mas, (por ej escribe 12 en vez de 1) no lo tome como valido
+	//Otra cosa: leo byte a byte porque me permite contar de a uno cuantos caracteres puso (variable i)y manejar validez con eso
 	/*
 	Esta funcion lee byte a byte por UART. Lo hago asi para poder manejar
-	mas facil errores de inpts del ususario
+	mas facil validez de inpts del ususario
 
-	El comando resultante queda modificado (se paso por referencia)
+	Retorna una variable de tipo Comando_t que puede ser OPCION_1 u OPCION_2, o INVALIDO.
 	*/
 
 	char comando[4];//Buffer de 4 bytes
-	char com; // Buffer de 1 byte
+	char byte; // Buffer de 1 byte
 	uint8_t i = 0;
 
 	while (i < sizeof(comando) - 1)
 	{
-		HAL_UART_Receive(handle_uart, (uint8_t*)&com, 1, HAL_MAX_DELAY);
+		HAL_UART_Receive(handle_uart, (uint8_t*)&byte, 1, HAL_MAX_DELAY);
 
-		if (com == '\r' || com == '\n') //si detecto enter dejo de leer
+		if (byte == '\r' || byte == '\n') //si detecto enter dejo de leer
 			break;
 
-		comando[i++] = com;
+		comando[i++] = byte;
 	}
 
 	comando[i] = '\0';  // cierro string
+
+	//Aviso con evento que hay un nuevo comando
+
 
 	//Retorno comando correspondiente
 	if (i == 1 && (comando[0] == '1')) return OPCION_1;
 
 	else if (i == 1 && (comando[0] == '2')) return OPCION_2;
 
-	else return ANY;
+	else return INVALIDO;
 
 }
 
 // creo que esto está mal, set_configuracion no debería llamar a comando, sino
 // recibirlo por parámetro, hay que acotar la funcionalidad
-void set_configuracion(UART_HandleTypeDef *handle_uart, Configurables_t configurable){
+// RESPUESTA: buena idea. ahi lo solucione. ademas esta bueno porque ya no tengo que pasarle tampoco el handle de la uart
+//cuando leas esto borra el parrafo
+void set_configuracion(Configurables_t configurable, Comando_t comando){
 
 	/*
-	Modifica la estructura "config", seteando el modo y el parametro leyendo comando por uart.
+	Modifica la estructura global "config" segun comando y configurable
+	Comando: indica si usuario eligio opcion 1 o 2
 	Configurable: indica si se quiere configurar modo o parmetro
 	*/
-
-	Comando_t comando = UART_leer_comando(handle_uart);
-//	uint32_t comando = buffer_comando[0] - '0'; //Dejo el comando como uint
 
 	switch (configurable){
 
 		case MODO:
 
 			if (comando == OPCION_1) {
-				config->modo = UNICO;
+				config.modo = UNICO;
 			}
 			else if (comando == OPCION_2) {
-				config->modo = CONTINUO;
+				config.modo = CONTINUO;
 			}
 
 		break;
@@ -178,10 +191,10 @@ void set_configuracion(UART_HandleTypeDef *handle_uart, Configurables_t configur
 		case PARAMETRO:
 
 			if (comando == OPCION_1) {
-				config->parametro = RESISTENCIA;
+				config.parametro = RESISTENCIA;
 			}
 			else if (comando == OPCION_2) {
-				config->parametro = CAPACITANCIA;
+				config.parametro = CAPACITANCIA;
 			}
 		break;
 	}
@@ -208,6 +221,7 @@ void FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uar
 				break;
 
 			case BOTON_MENU:
+				estado = MEDIR;
 				break;
 
 			default:
@@ -219,52 +233,72 @@ void FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uar
 		UART_mostrar_menu(menu_modo, handle_uart);
 
 		switch(evento) {
+
 			case NUEVO_COMANDO:
-				set_configuracion(handle_uart, MODO, &config);
+				Comando_t comando = UART_leer_comando(handle_uart);
+				set_configuracion(MODO, comando);
 				break;
+
 			case BOTON_MENU:
+				// en la maquina de estados falta definir que pasa si tocamos el boton durante un menu
 				break;
+
 			default:
+
 				break;
 			}
-		break;
+
 
 		case MENU_PARAM:
+
 			switch(evento) {
 			case NUEVO_COMANDO:
 				break;
-			case TICK_1MS:
-				break;
-			case TICK_100MS:
-				break;
 			case BOTON_MENU:
+				// en la maquina de estados falta definir que pasa si tocamos el boton durante un menu
 				break;
-			}
+			default:
+
 			break;
+			}
+	;
+
 		case MOSTRAR_MEDICION:
+
 			switch(evento) {
-			case NUEVO_COMANDO:
-				break;
-			case TICK_1MS:
-				break;
-			case TICK_100MS:
-				break;
-			case BOTON_MENU:
-				break;
+				case NUEVO_COMANDO:
+					break;
+				case TICK_1MS:
+					break;
+				case TICK_100MS:
+					break;
+				case BOTON_MENU:
+					break;
 			}
-		break;
-		case MEDIR:
+
+
+
+		case MEDIR: //para este estado capaz ni tengamos q ponerle switch interno, solo sale de aca con el evento TICK1ms. No lo borre por si queremos agregarle respuesta al boton
+
 			switch(evento) {
-			case NUEVO_COMANDO:
-				break;
-			case TICK_1MS:
-				break;
-			case TICK_100MS:
-				break;
-			case BOTON_MENU:
-				break;
+
+				case TICK_1MS:
+
+					if (config.parametro == RESISTENCIA)
+						medir_r();
+					else if (config.parametro == CAPACITANCIA) //el checkeo de condicion es redundante pero se entiende mejor, depsues lo podemos borrar
+						medir_c();
+
+					break;
+
+				case BOTON_MENU:
+					break;
+
+				default:
+					break;
+
 			}
-		break;
+
 
 			default:
 			break;

@@ -14,7 +14,7 @@ typedef enum {
 }Menu_t;
 
 typedef enum {
-	ANY,
+	INVALIDO,
 	OPCION_1,
 	OPCION_2,
 
@@ -23,6 +23,8 @@ typedef enum {
 void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart);
 Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart);
 uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc);
-void set_configuracion(UART_HandleTypeDef *handle_uart, Configurables_t configurable, Configuracion_t *config);
+void set_configuracion(Configurables_t configurable, Comando_t comando);
+void medir_c();
+void medir_r();
 
 #endif
