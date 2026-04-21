@@ -4,4 +4,4 @@
 ../Core/Src/libreria.c:51:6:UART_mostrar_menu	5
 ../Core/Src/libreria.c:121:11:UART_leer_comando	8
 ../Core/Src/libreria.c:170:6:set_configuracion	7
-../Core/Src/libreria.c:204:10:FSM_general	18
+../Core/Src/libreria.c:204:10:FSM_general	19

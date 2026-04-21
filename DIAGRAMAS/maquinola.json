@@ -5,7 +5,7 @@
       "x": 822,
       "y": 22,
       "label": "MENU_INFO",
-      "action": "UART_mostrar_menu(menu_info)\nUART_leer_comando()",
+      "action": "\n",
       "startAction": "",
       "radius": 103,
       "isStart": true,
@@ -13,23 +13,12 @@
     },
     {
       "id": 2,
-      "x": 869,
-      "y": 292,
+      "x": 1187,
+      "y": 391,
       "label": "MENU_MODO",
-      "action": "UART_mostrar_menu(menu_modo)\nUART_leer_comando()",
+      "action": "",
       "startAction": "",
-      "radius": 107,
-      "isStart": false,
-      "isPseudostate": false
-    },
-    {
-      "id": 3,
-      "x": 834,
-      "y": 710,
-      "label": "MENU_PARAM",
-      "action": "imprimir_menu_parametros()",
-      "startAction": "",
-      "radius": 89,
+      "radius": 108,
       "isStart": false,
       "isPseudostate": false
     },
@@ -57,14 +46,25 @@
     },
     {
       "id": 12,
-      "x": 1225,
-      "y": 655,
+      "x": 1658,
+      "y": 527,
       "label": "",
       "action": "",
       "startAction": "",
       "radius": 18,
       "isStart": false,
       "isPseudostate": true
+    },
+    {
+      "id": 14,
+      "x": 1030,
+      "y": 603,
+      "label": "MENU_PARAM",
+      "action": "",
+      "startAction": "",
+      "radius": 110,
+      "isStart": false,
+      "isPseudostate": false
     }
   ],
   "transitions": [
@@ -135,94 +135,30 @@
     {
       "from": 1,
       "to": 2,
-      "label": "nuevo_comando",
-      "action": "",
+      "label": "nuevo_comando[comando = OPCION_1]",
+      "action": "UART_mostrar_menu(menu_modo)",
       "controlOffset": {
-        "x": 0,
-        "y": 0
+        "x": 40,
+        "y": 6
       },
       "startAnchorAngle": null,
-      "endAnchorAngle": null,
+      "endAnchorAngle": -2.1368512355871583,
       "labelOffset": {
         "x": 103,
         "y": 6
       }
     },
     {
-      "from": 2,
-      "to": 3,
-      "label": "nuevo_comando[comando=continuo]",
-      "action": "configurar_modo(continuo)",
-      "controlOffset": {
-        "x": 86,
-        "y": 8
-      },
-      "startAnchorAngle": 0.9975419164019239,
-      "endAnchorAngle": -1.015617750674292,
-      "labelOffset": {
-        "x": 84,
-        "y": -11
-      }
-    },
-    {
-      "from": 2,
-      "to": 3,
-      "label": "nuevo_comando[comando=unico]",
-      "action": "configurar_modo(unico)",
-      "controlOffset": {
-        "x": -96,
-        "y": 0
-      },
-      "startAnchorAngle": 1.9902737885502577,
-      "endAnchorAngle": -1.9698572753710306,
-      "labelOffset": {
-        "x": -58,
-        "y": 41
-      }
-    },
-    {
       "from": 12,
       "to": 1,
       "label": "",
-      "action": "",
+      "action": "UART_mostrar_menu(menu_info)",
       "controlOffset": {
         "x": 218,
         "y": -200
       },
       "startAnchorAngle": -1.2120256565243244,
       "endAnchorAngle": 0.02499479361892016,
-      "labelOffset": {
-        "x": 0,
-        "y": 0
-      }
-    },
-    {
-      "from": 3,
-      "to": 12,
-      "label": "nuevo_comando[comando=r]",
-      "action": "configurar_parametro(r)",
-      "controlOffset": {
-        "x": 4,
-        "y": -64
-      },
-      "startAnchorAngle": -0.38650630511392003,
-      "endAnchorAngle": -2.4668517113662407,
-      "labelOffset": {
-        "x": 17,
-        "y": -39
-      }
-    },
-    {
-      "from": 3,
-      "to": 12,
-      "label": "nuevo_comando[comando=c]",
-      "action": "configurar_parametro(c)",
-      "controlOffset": {
-        "x": 30,
-        "y": 72
-      },
-      "startAnchorAngle": 0.4160645057238227,
-      "endAnchorAngle": 2.137525544318403,
       "labelOffset": {
         "x": 0,
         "y": 0
@@ -243,9 +179,89 @@
         "x": 0,
         "y": 0
       }
+    },
+    {
+      "from": 1,
+      "to": 14,
+      "label": "nuevo_comando[comando = OPCION_2]",
+      "action": "UART_mostrar_menu(menu_param)",
+      "controlOffset": {
+        "x": -24,
+        "y": 4
+      },
+      "startAnchorAngle": 1.3657963507913224,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": -18,
+        "y": 87
+      }
+    },
+    {
+      "from": 14,
+      "to": 12,
+      "label": "nuevo_comando[comando=OPCION_2\nset_config(CAPACITANCIA)]",
+      "action": "",
+      "controlOffset": {
+        "x": 92,
+        "y": 290
+      },
+      "startAnchorAngle": 0.9580796550154538,
+      "endAnchorAngle": 1.849095985800008,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "from": 14,
+      "to": 12,
+      "label": "nuevo_comando[comando=OPCION_2\nset_config(RESISTENCIA)]",
+      "action": "",
+      "controlOffset": {
+        "x": -16,
+        "y": 158
+      },
+      "startAnchorAngle": 0.2795221522836403,
+      "endAnchorAngle": 2.761086276477428,
+      "labelOffset": {
+        "x": -13,
+        "y": 19
+      }
+    },
+    {
+      "from": 2,
+      "to": 12,
+      "label": "nuevo_comando[comando=OPCION_2\nset_config(CONTINUO)]",
+      "action": "",
+      "controlOffset": {
+        "x": -62,
+        "y": -54
+      },
+      "startAnchorAngle": 0.4775839889069629,
+      "endAnchorAngle": -2.4917222041778455,
+      "labelOffset": {
+        "x": -1,
+        "y": 20
+      }
+    },
+    {
+      "from": 2,
+      "to": 12,
+      "label": "nuevo_comando[comando=OPCION_1\nset_config(UNICO)]",
+      "action": "",
+      "controlOffset": {
+        "x": 48,
+        "y": -70
+      },
+      "startAnchorAngle": -0.18394345653717517,
+      "endAnchorAngle": -2.1587989303424644,
+      "labelOffset": {
+        "x": -35,
+        "y": -35
+      }
     }
   ],
-  "stateIdCounter": 14,
+  "stateIdCounter": 15,
   "isDarkTheme": true,
   "simContext": {
     "parametro": 0,
@@ -254,6 +270,7 @@
     "modo": 0,
     "continuo": 0,
     "comando": 0,
-    "unico": 0
+    "OPCION_1": 0,
+    "OPCION_2": 0
   }
 }

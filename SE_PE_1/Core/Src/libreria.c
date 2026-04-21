@@ -118,55 +118,50 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
 	}
 }
 
-Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart){
-
-	// Es raro que se lea byte a byte, sería mejor tener un buffer de 64 bytes
-	// por ejemplo, y luego procesarlo caracter a caracter.
-	// la lógica de procesamiento puede ser la misma, pero cambiaría el
-	// tamaño del buffer de entrada.
-	//RESPUESTA: pasa que para que quiero leer 64 bytes si el usuario pondria como mucho 1 o 2?
-	// es mas, le puse 4 bytes (3 efectivos contando el \0) para que si se detecta que puso sin
-	// querer algo de mas, (por ej escribe 12 en vez de 1) no lo tome como valido
-	//Otra cosa: leo byte a byte porque me permite contar de a uno cuantos caracteres puso (variable i)y manejar validez con eso
-	/*
-	Esta funcion lee byte a byte por UART. Lo hago asi para poder manejar
-	mas facil validez de inpts del ususario
-
-	Retorna una variable de tipo Comando_t que puede ser OPCION_1 u OPCION_2, o INVALIDO.
-	*/
-
-	char comando[4];//Buffer de 4 bytes
-	char byte; // Buffer de 1 byte
-	uint8_t i = 0;
-
-	while (i < sizeof(comando) - 1)
-	{
-		HAL_UART_Receive(handle_uart, (uint8_t*)&byte, 1, HAL_MAX_DELAY);
-
-		if (byte == '\r' || byte == '\n') //si detecto enter dejo de leer
-			break;
-
-		comando[i++] = byte;
-	}
-
-	comando[i] = '\0';  // cierro string
-
-	//Aviso con evento que hay un nuevo comando
-
-
-	//Retorno comando correspondiente
-	if (i == 1 && (comando[0] == '1')) return OPCION_1;
-
-	else if (i == 1 && (comando[0] == '2')) return OPCION_2;
-
-	else return INVALIDO;
-
-}
-
-// creo que esto está mal, set_configuracion no debería llamar a comando, sino
-// recibirlo por parámetro, hay que acotar la funcionalidad
-// RESPUESTA: buena idea. ahi lo solucione. ademas esta bueno porque ya no tengo que pasarle tampoco el handle de la uart
-//cuando leas esto borra el parrafo
+//Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart){
+//
+//	// Es raro que se lea byte a byte, sería mejor tener un buffer de 64 bytes
+//	// por ejemplo, y luego procesarlo caracter a caracter.
+//	// la lógica de procesamiento puede ser la misma, pero cambiaría el
+//	// tamaño del buffer de entrada.
+//	//RESPUESTA: pasa que para que quiero leer 64 bytes si el usuario pondria como mucho 1 o 2?
+//	// es mas, le puse 4 bytes (3 efectivos contando el \0) para que si se detecta que puso sin
+//	// querer algo de mas, (por ej escribe 12 en vez de 1) no lo tome como valido
+//	//Otra cosa: leo byte a byte porque me permite contar de a uno cuantos caracteres puso (variable i)y manejar validez con eso
+//	/*
+//	Esta funcion lee byte a byte por UART. Lo hago asi para poder manejar
+//	mas facil validez de inpts del ususario
+//
+//	Retorna una variable de tipo Comando_t que puede ser OPCION_1 u OPCION_2, o INVALIDO.
+//	*/
+//
+//	char comando[4];//Buffer de 4 bytes
+//	char byte; // Buffer de 1 byte
+//	uint8_t i = 0;
+//
+//	while (i < sizeof(comando) - 1)
+//	{
+//		HAL_UART_Receive(handle_uart, (uint8_t*)&byte, 1, HAL_MAX_DELAY);
+//
+//		if (byte == '\r' || byte == '\n') //si detecto enter dejo de leer
+//			break;
+//
+//		comando[i++] = byte;
+//	}
+//
+//	comando[i] = '\0';  // cierro string
+//
+//	//Aviso con evento que hay un nuevo comando
+//
+//
+//	//Retorno comando correspondiente
+//	if (i == 1 && (comando[0] == '1')) return OPCION_1;
+//
+//	else if (i == 1 && (comando[0] == '2')) return OPCION_2;
+//
+//	else return INVALIDO;
+//
+//}
 void set_configuracion(Configurables_t configurable, Comando_t comando){
 
 	/*
@@ -210,18 +205,14 @@ Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle
 		switch(evento) {
 			case NUEVO_COMANDO:
 
-				UART_mostrar_menu(menu_info, handle_uart);
-
-				// y acá no se perdería el modo al que va?
-				// tendríamos hacer que vaya a MENU_MODO
-				// pero sabiendo si es resistencia o capacidad no?
-
-				// yo haría que la configuración se actualice acá,
-				set_configuracion(MODO, config.comando);
-				return MENU_MODO;
-
-			case BOTON_MENU:
-				return MEDIR;
+				if (config.comando == OPCION_1){
+					UART_mostrar_menu(menu_modo, handle_uart);
+					return MENU_MODO;
+				}
+				else if (config.comando == OPCION_2){
+					UART_mostrar_menu(menu_parametro, handle_uart);
+					return MENU_PARAM;
+				}
 
 			default:
 				return estado;
@@ -232,9 +223,13 @@ Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle
 		switch(evento) {
 
 			case NUEVO_COMANDO:
-				UART_mostrar_menu(menu_modo, handle_uart);
+
 				set_configuracion(MODO, config.comando);
+
+				UART_mostrar_menu(menu_info, handle_uart);
+
 				return MENU_INFO;
+
 
 			case BOTON_MENU:
 				// en la maquina de estados falta definir que pasa si tocamos el boton durante un menu
@@ -249,8 +244,13 @@ Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle
 
 			switch(evento) {
 			case NUEVO_COMANDO:
+
 				set_configuracion(PARAMETRO, config.comando);
+
+				UART_mostrar_menu(menu_info, handle_uart);
+
 				return MENU_INFO;
+
 			case BOTON_MENU:
 				// en la maquina de estados falta definir que pasa si tocamos el boton durante un menu
 				return estado;

@@ -73,7 +73,7 @@ volatile Configuracion_t config = {
 };
 
 Estado_t estado_actual = MENU_INFO;
-
+uint32_t nuevo_comando = 0;
 /* USER CODE END 0 */
 
 /**
@@ -115,6 +115,8 @@ int main(void)
   HAL_ADCEx_Calibration_Start(&hadc1);
 
   HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
+  UART_mostrar_menu(menu_info, &huart1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -124,6 +126,24 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+	  if (nuevo_comando){ //Atajo el flag del interrupt de la uart
+
+		switch (comando_buffer) {
+		case '1':
+			config.comando = OPCION_1;
+			break;
+		case '2':
+			config.comando = OPCION_2;
+			break;
+		default:
+			break;
+		}
+
+		estado_actual = FSM_general(estado_actual, NUEVO_COMANDO, &huart1);
+		HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
+		nuevo_comando = 0;
+
+	  }
 
 	  if (tick_100ms_counter - HAL_GetTick() > 100) {
 		  estado_actual = FSM_general(estado_actual, TICK_100MS, &huart1);
@@ -304,19 +324,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
-	switch (comando_buffer) {
-		case '1':
-			config.comando = OPCION_1;
-			break;
-		case '2':
-			config.comando = OPCION_2;
-			break;
-		default:
-			HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
-			return;
-	}
-	estado_actual = FSM_general(estado_actual, NUEVO_COMANDO, &huart1);
-	HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
+	nuevo_comando = 1;
 }
 
 /* USER CODE END 4 */
