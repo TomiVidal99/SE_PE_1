@@ -201,52 +201,47 @@ void set_configuracion(Configurables_t configurable, Comando_t comando){
 
 }
 
-void FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uart) {
+Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uart) {
 
 	switch(estado) {
 
 	case MENU_INFO:
 
-		UART_mostrar_menu(menu_info, handle_uart);
-
 		switch(evento) {
 			case NUEVO_COMANDO:
+
+				UART_mostrar_menu(menu_info, handle_uart);
+
 				// y acá no se perdería el modo al que va?
 				// tendríamos hacer que vaya a MENU_MODO
 				// pero sabiendo si es resistencia o capacidad no?
 
 				// yo haría que la configuración se actualice acá,
-				Comando_t comando = UART_leer_comando(handle_uart);
-				set_configuracion(MODO, comando);
-				estado = MENU_MODO;
-				break;
+				set_configuracion(MODO, config.comando);
+				return MENU_MODO;
 
 			case BOTON_MENU:
-				estado = MEDIR;
-				break;
+				return MEDIR;
 
 			default:
-				break;
+				return estado;
 			}
 
 	case MENU_MODO:
 
-		UART_mostrar_menu(menu_modo, handle_uart);
-
 		switch(evento) {
 
 			case NUEVO_COMANDO:
-				Comando_t comando = UART_leer_comando(handle_uart);
-				set_configuracion(MODO, comando);
-				break;
+				UART_mostrar_menu(menu_modo, handle_uart);
+				set_configuracion(MODO, config.comando);
+				return MENU_INFO;
 
 			case BOTON_MENU:
 				// en la maquina de estados falta definir que pasa si tocamos el boton durante un menu
-				break;
+				return estado;
 
 			default:
-
-				break;
+				return estado;
 			}
 
 
@@ -254,27 +249,24 @@ void FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uar
 
 			switch(evento) {
 			case NUEVO_COMANDO:
-				break;
+				set_configuracion(PARAMETRO, config.comando);
+				return MENU_INFO;
 			case BOTON_MENU:
 				// en la maquina de estados falta definir que pasa si tocamos el boton durante un menu
-				break;
+				return estado;
 			default:
-
-			break;
+				return estado;
 			}
-	;
 
 		case MOSTRAR_MEDICION:
 
 			switch(evento) {
-				case NUEVO_COMANDO:
-					break;
-				case TICK_1MS:
-					break;
 				case TICK_100MS:
+					if (config.modo == CONTINUO)
+						return MEDIR;
 					break;
-				case BOTON_MENU:
-					break;
+				default:
+					return estado;
 			}
 
 
@@ -290,18 +282,18 @@ void FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uar
 					else if (config.parametro == CAPACITANCIA) //el checkeo de condicion es redundante pero se entiende mejor, depsues lo podemos borrar
 						medir_c();
 
-					break;
+					return MOSTRAR_MEDICION;
 
 				case BOTON_MENU:
-					break;
+					return estado;
 
 				default:
-					break;
+					return estado;
 
 			}
 
 
 			default:
-			break;
+				return estado;
 	}
 }

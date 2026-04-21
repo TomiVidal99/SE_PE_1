@@ -34,7 +34,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define MESSAGE_BUFFER_LENGTH (60)
+#define COMANDO_BUFFER_SIZE (60)
 
 /* USER CODE END PD */
 
@@ -64,10 +64,12 @@ static void MX_ADC1_Init(void);
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
+char comando_buffer;
 
 volatile Configuracion_t config = {
     .parametro = DEFAULT_PARAMETRO,
-    .modo = DEFAULT_MODO
+    .modo = DEFAULT_MODO,
+	.comando = OPCION_1,
 };
 
 Estado_t estado_actual = MENU_INFO;
@@ -107,23 +109,30 @@ int main(void)
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
 
-  //char* msj = "test\r\n";
-  //HAL_UART_Transmit(&huart1, msj, 6, HAL_MAX_DELAY);
+  uint32_t tick_1ms_counter = HAL_GetTick();
+  uint32_t tick_100ms_counter = HAL_GetTick();
+
   HAL_ADCEx_Calibration_Start(&hadc1);
+
+  HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-//	uint32_t muestra = ADC_muestrear(&hadc1);
-//	sprintf(buffer_uart, "%lu\r\n", muestra);
-//	HAL_UART_Transmit(&huart1, (uint8_t*)buffer_uart, strlen(buffer_uart), HAL_MAX_DELAY);
-	UART_mostrar_menu(menu_parametro, &huart1);
-	HAL_Delay(10000);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+
+	  if (tick_100ms_counter - HAL_GetTick() > 100) {
+		  estado_actual = FSM_general(estado_actual, TICK_100MS, &huart1);
+	  }
+
+	  if (tick_1ms_counter - HAL_GetTick() > 1) {
+		  estado_actual = FSM_general(estado_actual, TICK_1MS, &huart1);
+	  }
+
   }
   /* USER CODE END 3 */
 }
@@ -294,9 +303,20 @@ static void MX_GPIO_Init(void)
 
 /* USER CODE BEGIN 4 */
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
-{
-	FSM_general(estado_actual, BOTON_MENU, &huart1);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	switch (comando_buffer) {
+		case '1':
+			config.comando = OPCION_1;
+			break;
+		case '2':
+			config.comando = OPCION_2;
+			break;
+		default:
+			HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
+			return;
+	}
+	estado_actual = FSM_general(estado_actual, NUEVO_COMANDO, &huart1);
+	HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
 }
 
 /* USER CODE END 4 */
