@@ -26,5 +26,6 @@ uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc);
 void set_configuracion(Configurables_t configurable, Comando_t comando);
 void medir_c();
 void medir_r();
+void FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uart);
 
 #endif

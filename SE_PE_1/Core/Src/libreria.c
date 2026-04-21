@@ -216,7 +216,8 @@ void FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uar
 				// pero sabiendo si es resistencia o capacidad no?
 
 				// yo haría que la configuración se actualice acá,
-				// set_configuracion(handle_uart, MODO, &config);
+				Comando_t comando = UART_leer_comando(handle_uart);
+				set_configuracion(MODO, comando);
 				estado = MENU_MODO;
 				break;
 

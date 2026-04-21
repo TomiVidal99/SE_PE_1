@@ -111,6 +111,7 @@ int main(void)
   //HAL_UART_Transmit(&huart1, msj, 6, HAL_MAX_DELAY);
   HAL_ADCEx_Calibration_Start(&hadc1);
   /* USER CODE END 2 */
+
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
@@ -185,7 +186,6 @@ static void MX_ADC1_Init(void)
 
   /* USER CODE END ADC1_Init 0 */
 
-  //Configuracion del canal del ADC
   ADC_ChannelConfTypeDef sConfig = {0};
 
   /* USER CODE BEGIN ADC1_Init 1 */
@@ -281,11 +281,11 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(OUT_LED_DEBUG_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : BOTON_MENU_Pin */
-  GPIO_InitStruct.Pin = BOTON_MENU_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  /*Configure GPIO pin : BTN_MENU_Pin */
+  GPIO_InitStruct.Pin = BTN_MENU_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
-  HAL_GPIO_Init(BOTON_MENU_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(BTN_MENU_GPIO_Port, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
@@ -293,6 +293,11 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	FSM_general(estado_actual, BOTON_MENU, &huart1);
+}
 
 /* USER CODE END 4 */
 
