@@ -10,6 +10,8 @@
 #define ADC_N_MUESTRAS 32
 
 extern volatile Configuracion_t config;
+extern volatile uint32_t r_medida;
+extern volatile uint32_t c_medida;
 /*
 void ADC_calibrar(ADC_HandleTypeDef *handle_adc){
 
@@ -24,10 +26,88 @@ void ADC_calibrar(ADC_HandleTypeDef *handle_adc){
 */
 
 void medir_c(){
+	/*
+
+	 */
+	// Descarga
+
+
 
 }
-void medir_r(){
+void medir_r(ADC_HandleTypeDef *handle_adc){
+	/*
 
+	Esta funcion primero genera la secuencia de autorango y luego
+	almacena la medida del parametro del DUT en la variable global
+	r_medida o c_medida segun corresponda
+	// MEJORA: hacer que la parte de autorango solo se ejcute solo la primera vez si se esta haciendo disparo continuio
+	// Btw al final no la hice con maquina de estados era mucha paja seguir declarando mas enums
+
+	*/
+
+	  //Cambio la configuracion de los pines
+	  GPIO_InitTypeDef GPIO_InitStruct = {0};
+
+	  //Configuro 330r como salida en alto
+	  GPIO_InitStruct.Pin = GPIO330R_Pin;
+	  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	  HAL_GPIO_WritePin(GPIOA, GPIO330R_Pin, GPIO_PIN_SET); //High
+
+      // Y las demas en Z
+	  GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO1M_Pin;
+	  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	  uint32_t muestra = ADC_muestrear(handle_adc);
+
+	  if (muestra < (0.95*3300)) {
+		  r_medida = muestra;
+		  return;
+	  }
+
+	  //Siguiente configuracion, GPIO10K en alto
+	  GPIO_InitStruct.Pin = GPIO10K_Pin;
+	  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	  HAL_GPIO_WritePin(GPIOA, GPIO10K_Pin, GPIO_PIN_SET); //High
+
+      // Y las demas en Z
+	  GPIO_InitStruct.Pin = GPIO330R_Pin;
+	  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	  muestra = ADC_muestrear(handle_adc);
+
+	  if (muestra < (0.95*3300)) {
+		  r_medida = muestra;
+		  return;
+	  }
+	  //Siguiente configuracion, GPIO1M en alto
+	  GPIO_InitStruct.Pin = GPIO1M_Pin;
+	  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+	  HAL_GPIO_WritePin(GPIOA, GPIO1M_Pin, GPIO_PIN_SET); //High
+
+      // Y las demas en Z
+	  GPIO_InitStruct.Pin = GPIO10K_Pin;
+	  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+	  GPIO_InitStruct.Pull = GPIO_NOPULL;
+	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	  r_medida = ADC_muestrear(handle_adc);
+	  return;
 }
 
 uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc){
@@ -52,6 +132,11 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
 
 	/*
 	Toma como parametro el tipo Menu_t y lo imprime en pantalla a traves de la uart especificada
+	Existen 4 menus distitnos:
+		-menu_info: muestra informacion acerca de la configuracion (modo y parametro a medir)
+		-menu_modo: muestra el menu de seleccion de modo (unico y continuo)
+		-menu_parametro: muestra el menu de seleccion de parametro (resistencia y capacitancia)
+		-menu_medicion: muestra el menu con los datos de la ultima medicion
 	*/
 
 	char clear[] = "\033[2J\033[H"; // Clear
@@ -113,6 +198,54 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
 			"------------------------------------\r\n"
 			"> ";
 			HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_parametro, strlen(buffer_uart_parametro), HAL_MAX_DELAY);
+
+		break;
+
+		case menu_medicion:
+
+			//Defino el valor que se va a mostrar (resistencia o capacitancia)
+
+			char buffer_uart_medicion[200];
+
+			const char *parametro_string;
+			const char *modo_string;
+			const char *unidad;
+			int valor;
+
+			if (config.modo == UNICO) {
+			    modo_string = "DISPARO UNICO";
+			} else {
+			    modo_string = "DISPARO CONTINUO";
+			}
+
+			if (config.parametro == RESISTENCIA) {
+			    parametro_string = "RESISTENCIA";
+			    valor = r_medida;
+			    unidad = "Ω";
+
+			} else {
+			    parametro_string = "CAPACITANCIA";
+			    valor = c_medida;
+			    unidad = "F";
+			}
+
+			// Armo el mensaje
+			snprintf(buffer_uart_medicion, sizeof(buffer_uart_medicion),
+			    "====================================\r\n"
+			    "        MEDICION %s        \r\n"
+			    "            %s        \r\n"
+			    "====================================\r\n"
+			    "\r\n"
+			    "Valor: %d %s\r\n"
+			    ,
+			    parametro_string,
+				modo_string,
+			    valor,
+				unidad
+			);
+
+			// enviar por UART
+			HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_medicion, strlen(buffer_uart_medicion), HAL_MAX_DELAY);
 
 		break;
 	}
@@ -260,10 +393,14 @@ Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle
 
 		case MOSTRAR_MEDICION:
 
+		UART_mostrar_menu(menu_medicion, handle_uart);
+
 			switch(evento) {
 				case TICK_100MS:
-					if (config.modo == CONTINUO)
+					if (config.modo == CONTINUO) {
 						return MEDIR;
+					}
+
 					break;
 				default:
 					return estado;
@@ -277,10 +414,10 @@ Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle
 
 				case TICK_1MS:
 
-					if (config.parametro == RESISTENCIA)
-						medir_r();
-					else if (config.parametro == CAPACITANCIA) //el checkeo de condicion es redundante pero se entiende mejor, depsues lo podemos borrar
-						medir_c();
+//					if (config.parametro == RESISTENCIA)
+//						//medir_r(hadc1); para usar medir r y medir c hay q pasarle handle_adc, pero no esta pasada a esta funcion, hay q corregir eso antes de descomentar
+//					else if (config.parametro == CAPACITANCIA) //el checkeo de condicion es redundante pero se entiende mejor, depsues lo podemos borrar
+//						//medir_c(hadc1);
 
 					return MOSTRAR_MEDICION;
 

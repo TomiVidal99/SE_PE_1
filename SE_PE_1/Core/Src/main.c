@@ -72,8 +72,10 @@ volatile Configuracion_t config = {
 	.comando = OPCION_1,
 };
 
-Estado_t estado_actual = MENU_INFO;
-uint32_t nuevo_comando = 0;
+volatile Estado_t estado_actual = MENU_INFO;
+volatile uint32_t nuevo_comando = 0;
+volatile uint32_t r_medida = 0;
+volatile uint32_t c_medida = 0;
 /* USER CODE END 0 */
 
 /**
@@ -115,7 +117,9 @@ int main(void)
   HAL_ADCEx_Calibration_Start(&hadc1);
 
   HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
-  UART_mostrar_menu(menu_info, &huart1);
+//  UART_mostrar_menu(menu_info, &huart1);
+
+  UART_mostrar_menu(menu_medicion, &huart1);
 
   /* USER CODE END 2 */
 
@@ -303,6 +307,9 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(OUT_LED_DEBUG_GPIO_Port, OUT_LED_DEBUG_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO330R_Pin|GPIO10K_Pin|GPIO1M_Pin, GPIO_PIN_RESET);
+
   /*Configure GPIO pin : OUT_LED_DEBUG_Pin */
   GPIO_InitStruct.Pin = OUT_LED_DEBUG_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -315,6 +322,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_PULLUP;
   HAL_GPIO_Init(BTN_MENU_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : GPIO330R_Pin GPIO10K_Pin GPIO1M_Pin */
+  GPIO_InitStruct.Pin = GPIO330R_Pin|GPIO10K_Pin|GPIO1M_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 

@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <stdio.h>
+#include <string.h>
 #include "main.h"
 
 #define DEFAULT_MODO UNICO
@@ -63,6 +65,7 @@ typedef enum {
 	menu_parametro,
 	menu_modo,
 	menu_info,
+	menu_medicion,
 }Menu_t;
 
 void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart);
@@ -70,7 +73,7 @@ Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart);
 uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc);
 void set_configuracion(Configurables_t configurable, Comando_t comando);
 void medir_c();
-void medir_r();
+void medir_r(ADC_HandleTypeDef *handle_adc);
 Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uart);
 void uart_leer_comando_it();
 

@@ -63,6 +63,12 @@ void Error_Handler(void);
 #define BTN_MENU_GPIO_Port GPIOA
 #define ADC_Pin GPIO_PIN_1
 #define ADC_GPIO_Port GPIOA
+#define GPIO330R_Pin GPIO_PIN_5
+#define GPIO330R_GPIO_Port GPIOA
+#define GPIO10K_Pin GPIO_PIN_6
+#define GPIO10K_GPIO_Port GPIOA
+#define GPIO1M_Pin GPIO_PIN_7
+#define GPIO1M_GPIO_Port GPIOA
 
 /* USER CODE BEGIN Private defines */
 
