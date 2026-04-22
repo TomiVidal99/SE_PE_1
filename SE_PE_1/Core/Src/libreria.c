@@ -34,6 +34,72 @@ void medir_c(){
 
 
 }
+
+void set_resistencia(uint16_t pin){
+
+
+	/*
+	Toma como input el define del pin, y lo setea en alto
+	mientras que setea los otros dos pines en alta Z.
+	*/
+
+	  GPIO_InitTypeDef GPIO_InitStruct = {0}; //Esto habria que ver si hace falta llamarlo siempre, capaz
+	  	  	  	  	  	  	  	  	  	  	 	 //podemos evitarnos tambien inicializar gpio initstruct cada vez
+
+	  switch (pin){
+
+	  case GPIO330R_Pin:
+          //330r como salida en alto
+		  GPIO_InitStruct.Pin = GPIO330R_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		  HAL_GPIO_WritePin(GPIOA, GPIO330R_Pin, GPIO_PIN_SET); //High
+
+		  GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO1M_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	  case GPIO10K_Pin:
+		  // GPIO10K en alto
+		  GPIO_InitStruct.Pin = GPIO10K_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		  HAL_GPIO_WritePin(GPIOA, GPIO10K_Pin, GPIO_PIN_SET); //High
+
+		  // Y las demas en Z
+		  GPIO_InitStruct.Pin = GPIO330R_Pin|GPIO1M_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	  case GPIO1M_Pin:
+		  //GPIO1M en alto
+		  GPIO_InitStruct.Pin = GPIO1M_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		  HAL_GPIO_WritePin(GPIOA, GPIO1M_Pin, GPIO_PIN_SET); //High
+
+		  // Y las demas en Z
+		  GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO330R_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+
+
+	  }
+}
+
 void medir_r(ADC_HandleTypeDef *handle_adc){
 	/*
 
@@ -46,67 +112,24 @@ void medir_r(ADC_HandleTypeDef *handle_adc){
 	*/
 
 	  //Cambio la configuracion de los pines
-	  GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-	  //Configuro 330r como salida en alto
-	  GPIO_InitStruct.Pin = GPIO330R_Pin;
-	  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	  GPIO_InitStruct.Pull = GPIO_NOPULL;
-	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-	  HAL_GPIO_WritePin(GPIOA, GPIO330R_Pin, GPIO_PIN_SET); //High
-
-      // Y las demas en Z
-	  GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO1M_Pin;
-	  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
-	  GPIO_InitStruct.Pull = GPIO_NOPULL;
-	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
+	  set_resistencia(GPIO330R_Pin);
 	  uint32_t muestra = ADC_muestrear(handle_adc);
-
 	  if (muestra < (0.95*3300)) {
 		  r_medida = muestra;
 		  return;
 	  }
 
-	  //Siguiente configuracion, GPIO10K en alto
-	  GPIO_InitStruct.Pin = GPIO10K_Pin;
-	  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	  GPIO_InitStruct.Pull = GPIO_NOPULL;
-	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-	  HAL_GPIO_WritePin(GPIOA, GPIO10K_Pin, GPIO_PIN_SET); //High
-
-      // Y las demas en Z
-	  GPIO_InitStruct.Pin = GPIO330R_Pin;
-	  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
-	  GPIO_InitStruct.Pull = GPIO_NOPULL;
-	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
+	  set_resistencia(GPIO10K_Pin);
 	  muestra = ADC_muestrear(handle_adc);
-
 	  if (muestra < (0.95*3300)) {
 		  r_medida = muestra;
 		  return;
 	  }
-	  //Siguiente configuracion, GPIO1M en alto
-	  GPIO_InitStruct.Pin = GPIO1M_Pin;
-	  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	  GPIO_InitStruct.Pull = GPIO_NOPULL;
-	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-	  HAL_GPIO_WritePin(GPIOA, GPIO1M_Pin, GPIO_PIN_SET); //High
 
-      // Y las demas en Z
-	  GPIO_InitStruct.Pin = GPIO10K_Pin;
-	  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
-	  GPIO_InitStruct.Pull = GPIO_NOPULL;
-	  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
+	  set_resistencia(GPIO1M_Pin);
 	  r_medida = ADC_muestrear(handle_adc);
+
 	  return;
 }
 

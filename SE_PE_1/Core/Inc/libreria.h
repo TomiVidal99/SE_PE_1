@@ -76,5 +76,6 @@ void medir_c();
 void medir_r(ADC_HandleTypeDef *handle_adc);
 Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uart);
 void uart_leer_comando_it();
+void set_resistencia(uint16_t pin);
 
 #endif

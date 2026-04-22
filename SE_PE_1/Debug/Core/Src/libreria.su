@@ -1,6 +1,7 @@
 ../Core/Src/libreria.c:28:6:medir_c	4	static
-../Core/Src/libreria.c:37:6:medir_r	40	static
-../Core/Src/libreria.c:113:10:ADC_muestrear	24	static
-../Core/Src/libreria.c:131:6:UART_mostrar_menu	400	static
-../Core/Src/libreria.c:298:6:set_configuracion	16	static
-../Core/Src/libreria.c:332:10:FSM_general	16	static
+../Core/Src/libreria.c:38:6:set_resistencia	32	static
+../Core/Src/libreria.c:103:6:medir_r	24	static
+../Core/Src/libreria.c:136:10:ADC_muestrear	24	static
+../Core/Src/libreria.c:154:6:UART_mostrar_menu	400	static
+../Core/Src/libreria.c:321:6:set_configuracion	16	static
+../Core/Src/libreria.c:355:10:FSM_general	16	static
