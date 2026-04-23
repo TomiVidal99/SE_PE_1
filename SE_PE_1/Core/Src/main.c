@@ -74,6 +74,7 @@ volatile Configuracion_t config = {
 
 volatile Estado_t estado_actual = MENU_INFO;
 volatile uint32_t nuevo_comando = 0;
+volatile uint32_t btn_menu = 0;
 volatile uint32_t r_medida = 0;
 volatile uint32_t c_medida = 0;
 /* USER CODE END 0 */
@@ -119,7 +120,7 @@ int main(void)
   HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
 //  UART_mostrar_menu(menu_info, &huart1);
 
-  UART_mostrar_menu(menu_medicion, &huart1);
+  UART_mostrar_menu(menu_info, &huart1);
 
   /* USER CODE END 2 */
 
@@ -130,24 +131,30 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
-	  if (nuevo_comando){ //Atajo el flag del interrupt de la uart
+	    if (nuevo_comando){ //Atajo el flag del interrupt de la uart.
 
-		switch (comando_buffer) {
-		case '1':
-			config.comando = OPCION_1;
-			break;
-		case '2':
-			config.comando = OPCION_2;
-			break;
-		default:
-			break;
+			switch (comando_buffer) {
+			case '1':
+				config.comando = OPCION_1;
+				break;
+			case '2':
+				config.comando = OPCION_2;
+				break;
+			default:
+				break;
 		}
-
 		estado_actual = FSM_general(estado_actual, NUEVO_COMANDO, &huart1);
 		HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
 		nuevo_comando = 0;
+	    }
 
-	  }
+		if (btn_menu){ //Atajo el flag del interrupt del boton
+
+			estado_actual = FSM_general(estado_actual, BOTON_MENU, &huart1);
+			btn_menu = 0;
+		}
+
+
 
 	  if (tick_100ms_counter - HAL_GetTick() > 100) {
 		  estado_actual = FSM_general(estado_actual, TICK_100MS, &huart1);
@@ -330,6 +337,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
   /* USER CODE BEGIN MX_GPIO_Init_2 */
 
   /* USER CODE END MX_GPIO_Init_2 */
@@ -339,6 +350,17 @@ static void MX_GPIO_Init(void)
 
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	nuevo_comando = 1;
+}
+
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+  /* Prevent unused argument(s) compilation warning */
+  if (GPIO_Pin == BTN_MENU_Pin){
+	  btn_menu = 1; //Enciendo flag de que se presiono el boton menu xd
+  }
+  /* NOTE: This function Should not be modified, when the callback is needed,
+           the HAL_GPIO_EXTI_Callback could be implemented in the user file
+   */
 }
 
 /* USER CODE END 4 */

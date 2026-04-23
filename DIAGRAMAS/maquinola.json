@@ -5,7 +5,7 @@
       "x": 822,
       "y": 22,
       "label": "MENU_INFO",
-      "action": "\n",
+      "action": "",
       "startAction": "",
       "radius": 103,
       "isStart": true,
@@ -26,7 +26,7 @@
       "id": 6,
       "x": 178,
       "y": 623,
-      "label": "MOSTRAR_MED",
+      "label": "MENU_MEDICION",
       "action": "UART_mostrar_menu(menu_med)",
       "startAction": "",
       "radius": 111,
@@ -120,7 +120,7 @@
       "from": 6,
       "to": 1,
       "label": "BTN_MENU",
-      "action": "",
+      "action": "UART_mostrar_menu(menu_info)",
       "controlOffset": {
         "x": 32,
         "y": 166

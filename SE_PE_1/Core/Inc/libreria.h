@@ -44,7 +44,7 @@ typedef enum {
 	MENU_INFO,
 	MENU_MODO,
 	MENU_PARAM,
-	MOSTRAR_MEDICION,
+	MENU_MEDICION,
 	MEDIR,
 } Estado_t;
 

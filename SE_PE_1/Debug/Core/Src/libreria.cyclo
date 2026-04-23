@@ -4,4 +4,4 @@
 ../Core/Src/libreria.c:136:10:ADC_muestrear	2
 ../Core/Src/libreria.c:154:6:UART_mostrar_menu	7
 ../Core/Src/libreria.c:321:6:set_configuracion	7
-../Core/Src/libreria.c:355:10:FSM_general	17
+../Core/Src/libreria.c:355:10:FSM_general	19

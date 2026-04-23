@@ -370,6 +370,9 @@ Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle
 					return MENU_PARAM;
 				}
 
+			case BOTON_MENU:
+				return MEDIR;
+
 			default:
 				return estado;
 			}
@@ -414,9 +417,8 @@ Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle
 				return estado;
 			}
 
-		case MOSTRAR_MEDICION:
+		case MENU_MEDICION:
 
-		UART_mostrar_menu(menu_medicion, handle_uart);
 
 			switch(evento) {
 				case TICK_100MS:
@@ -425,6 +427,11 @@ Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle
 					}
 
 					break;
+
+				case BOTON_MENU:
+					UART_mostrar_menu(menu_info, handle_uart);
+					return MENU_INFO;
+
 				default:
 					return estado;
 			}
@@ -442,7 +449,9 @@ Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle
 //					else if (config.parametro == CAPACITANCIA) //el checkeo de condicion es redundante pero se entiende mejor, depsues lo podemos borrar
 //						//medir_c(hadc1);
 
-					return MOSTRAR_MEDICION;
+					UART_mostrar_menu(menu_medicion, handle_uart);
+
+					return MENU_MEDICION;
 
 				case BOTON_MENU:
 					return estado;
