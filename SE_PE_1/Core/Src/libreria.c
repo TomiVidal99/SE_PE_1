@@ -25,17 +25,91 @@ void ADC_calibrar(ADC_HandleTypeDef *handle_adc){
 }
 */
 
-void medir_c(){
-	/*
-
-	 */
+void medir_c(ADC_HandleTypeDef *handle_adc){
 	// Descarga
 
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
+	// TODO: preguntar orden de WritePin
+	HAL_GPIO_WritePin(GPIO330R_GPIO_Port, GPIO330R_Pin, GPIO_PIN_RESET);
+
+	//330r como salida en bajo (no pull up ni pull down)
+	GPIO_InitStruct.Pin = GPIO330R_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIO330R_GPIO_Port, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO1M_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIO10K_GPIO_Port, &GPIO_InitStruct);
+
+	HAL_Delay(5);
+
+	// Se mide hasta que se llegue a un valor menor al 2%
+	uint32_t muestra = VCC_MV;
+	uint32_t contador_fallo = 0;
+	while (muestra > VCC_AL_2_PORCIENTO && contador_fallo < (100*100)){
+		muestra = ADC_muestrear(handle_adc);
+//		HAL_ADC_Start(handle_adc);
+//		HAL_ADC_PollForConversion(handle_adc, 1000);
+//		muestra = HAL_ADC_GetValue(handle_adc);
+
+		contador_fallo++;
+	}
+
+	if (contador_fallo >= (100*100)) {
+		// TODO: tirar algún error acá
+		c_medida = -1;
+		return;
+	}
+
+	// Se setea GPIO1M como salida en bajo y las otras dos en alta impendacia
+	HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_RESET);
+	//330r como salida en bajo (no pull up ni pull down)
+	GPIO_InitStruct.Pin = GPIO1M_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIO1M_GPIO_Port, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = GPIO330R_Pin|GPIO10K_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+	// se hace la medición de capacidad
+#define MAX_CUENTAS_CAPACIDAD (5 * 1000 * 1000)
+	uint32_t contador_de_muestras = 0;
+	muestra = 0;
+	HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_SET);
+
+	while (muestra < VCC_AL_63_PORCIENTO) {
+//		muestra = ADC_muestrear(handle_adc);
+		HAL_ADC_Start(handle_adc);
+		HAL_ADC_PollForConversion(handle_adc, 1000);
+		muestra = HAL_ADC_GetValue(handle_adc);
+
+		HAL_Delay(1);
+
+		contador_de_muestras++;
+		if (contador_de_muestras > MAX_CUENTAS_CAPACIDAD) {
+			// TODO: hay que tener un mensaje "FUERA DE ESCALA"
+			return;
+		}
+	}
+
+	c_medida = contador_de_muestras;
+//	c_medida = (contador_de_muestras * 1000) / VALOR_RESISTOR_1M_KOHMS;
+
+	return;
 
 }
 
-void set_resistencia(uint16_t pin){
+void set_resistencia(OutputResistor_Type resistorType){
 
 
 	/*
@@ -46,47 +120,55 @@ void set_resistencia(uint16_t pin){
 	  GPIO_InitTypeDef GPIO_InitStruct = {0}; //Esto habria que ver si hace falta llamarlo siempre, capaz
 	  	  	  	  	  	  	  	  	  	  	 	 //podemos evitarnos tambien inicializar gpio initstruct cada vez
 
-	  switch (pin){
+	  switch (resistorType){
 
-	  case GPIO330R_Pin:
+	  case RESISTOR_330:
           //330r como salida en alto
 		  GPIO_InitStruct.Pin = GPIO330R_Pin;
 		  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 		  GPIO_InitStruct.Pull = GPIO_NOPULL;
 		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-		  HAL_GPIO_WritePin(GPIOA, GPIO330R_Pin, GPIO_PIN_SET); //High
+		  HAL_GPIO_Init(GPIO330R_GPIO_Port, &GPIO_InitStruct);
+		  HAL_GPIO_WritePin(GPIO330R_GPIO_Port, GPIO330R_Pin, GPIO_PIN_SET);
 
 		  GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO1M_Pin;
 		  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
 		  GPIO_InitStruct.Pull = GPIO_NOPULL;
 		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  // Hay que tener cuidado que justo GPIO10K y GPIO1M
+		  // son del puerto GPIOA, pero si no fuera así
+		  // hay que inicializarlos separados
 		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		  break;
 
-	  case GPIO10K_Pin:
+	  case RESISTOR_10K:
 		  // GPIO10K en alto
 		  GPIO_InitStruct.Pin = GPIO10K_Pin;
 		  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 		  GPIO_InitStruct.Pull = GPIO_NOPULL;
 		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-		  HAL_GPIO_WritePin(GPIOA, GPIO10K_Pin, GPIO_PIN_SET); //High
+		  HAL_GPIO_Init(GPIO10K_GPIO_Port, &GPIO_InitStruct);
+		  HAL_GPIO_WritePin(GPIO10K_GPIO_Port, GPIO10K_Pin, GPIO_PIN_SET); //High
 
 		  // Y las demas en Z
 		  GPIO_InitStruct.Pin = GPIO330R_Pin|GPIO1M_Pin;
 		  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
 		  GPIO_InitStruct.Pull = GPIO_NOPULL;
 		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  // Hay que tener cuidado que justo GPIO10K y GPIO1M
+		  // son del puerto GPIOA, pero si no fuera así
+		  // hay que inicializarlos separados
 		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		  break;
 
-	  case GPIO1M_Pin:
+	  case RESISTOR_1M:
 		  //GPIO1M en alto
 		  GPIO_InitStruct.Pin = GPIO1M_Pin;
 		  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 		  GPIO_InitStruct.Pull = GPIO_NOPULL;
 		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-		  HAL_GPIO_WritePin(GPIOA, GPIO1M_Pin, GPIO_PIN_SET); //High
+		  HAL_GPIO_Init(GPIO1M_GPIO_Port, &GPIO_InitStruct);
+		  HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_SET); //High
 
 		  // Y las demas en Z
 		  GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO330R_Pin;
@@ -94,8 +176,11 @@ void set_resistencia(uint16_t pin){
 		  GPIO_InitStruct.Pull = GPIO_NOPULL;
 		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		  break;
 
-
+	  default:
+		  // TODO habría que tener un fallback para el error
+		  break;
 
 	  }
 }
@@ -113,22 +198,31 @@ void medir_r(ADC_HandleTypeDef *handle_adc){
 
 	  //Cambio la configuracion de los pines
 
-	  set_resistencia(GPIO330R_Pin);
+	  set_resistencia(RESISTOR_330);
 	  uint32_t muestra = ADC_muestrear(handle_adc);
-	  if (muestra < (0.95*3300)) {
-		  r_medida = muestra;
+	  if (muestra < VCC_AL_95_PORCIENTO) {
+		  r_medida = (VALOR_RESISTOR_330_OHMS * muestra) / (VCC_MV - muestra);
+//		  config.unidad = OHMS;
 		  return;
 	  }
 
-	  set_resistencia(GPIO10K_Pin);
+
+	  set_resistencia(RESISTOR_10K);
 	  muestra = ADC_muestrear(handle_adc);
-	  if (muestra < (0.95*3300)) {
-		  r_medida = muestra;
+	  if (muestra < VCC_AL_95_PORCIENTO) {
+		  r_medida = (VALOR_RESISTOR_10K_OHMS * muestra) / (VCC_MV - muestra);
+//		  config.unidad = OHMS;
 		  return;
 	  }
 
-	  set_resistencia(GPIO1M_Pin);
-	  r_medida = ADC_muestrear(handle_adc);
+	  set_resistencia(RESISTOR_1M);
+	  muestra = ADC_muestrear(handle_adc);
+	  if (muestra == VCC_MV) {
+		  r_medida = VALOR_RESISTOR_1M_OHMS;
+		  return;
+	  }
+	  r_medida = (VALOR_RESISTOR_1M_OHMS * muestra) / (VCC_MV - muestra);
+//	  config.unidad = MEGA_OHMS;
 
 	  return;
 }
@@ -147,10 +241,13 @@ uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc){
 	}
 
 	//Convierto a mV, calculo promedio y retorno
-	return (acc * 3300) / (4095 * ADC_N_MUESTRAS);
+	return (acc * (uint32_t)3300) / ((uint32_t)4095 * ADC_N_MUESTRAS);
 }
 
 //UART
+// TODO:
+// YO NO HARÍA ESTA FUNCIÓN, PORQUE BÁSICAMENTE CHECKEA ALGO QUE
+// YA ESTÁ EN LA FSM, ENTONCES COMO QUE ES DOBLE REDUNDANCIA
 void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
 
 	/*
@@ -168,24 +265,32 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
 
 		case menu_info:
 			// Esto dsp lo midifico para que muestre modo y parametro dinamicamente
-			char buffer_uart_info[] =
-			"\r\n"
-			"====================================\r\n"
-			"             MENU INFO              \r\n"
-			"====================================\r\n"
-			"\r\n"
-			"Estado actual:\r\n"
-			"  • Modo      : blabla\r\n"
-			"  • Parametro : blabla\r\n"
-			"\r\n"
-			"------------------------------------\r\n"
-			"Seleccione una opcion:\r\n"
-			"\r\n"
-			"  [1] Cambiar modo\r\n"
-			"  [2] Cambiar parametro\r\n"
-			"\r\n"
-			"------------------------------------\r\n"
-			"> ";
+			char buffer_uart_info[360];
+//			HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_info, strlen(buffer_uart_info), HAL_MAX_DELAY);
+
+			snprintf(buffer_uart_info, sizeof(buffer_uart_info),
+					"\r\n"
+					"====================================\r\n"
+					"             MENU INFO              \r\n"
+					"====================================\r\n"
+					"\r\n"
+					"Estado actual:\r\n"
+					"  • Modo      : %s\r\n"
+					"  • Parametro : %s\r\n"
+					"\r\n"
+					"------------------------------------\r\n"
+					"Seleccione una opcion:\r\n"
+					"\r\n"
+					"  [1] Cambiar modo\r\n"
+					"  [2] Cambiar parametro\r\n"
+					"\r\n"
+					"------------------------------------\r\n"
+					"> ",
+					config.modo == CONTINUO ? "CONTINUO" : "UNICO",
+					config.parametro == RESISTENCIA ? "RESISTENCIA" : "CAPACIDAD"
+			);
+
+			// enviar por UART
 			HAL_UART_Transmit(handle_uart, (uint8_t*)buffer_uart_info, strlen(buffer_uart_info), HAL_MAX_DELAY);
 
 		break;
@@ -352,7 +457,7 @@ void set_configuracion(Configurables_t configurable, Comando_t comando){
 
 }
 
-Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uart) {
+Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle_uart, ADC_HandleTypeDef *handle_adc) {
 
 	switch(estado) {
 
@@ -444,10 +549,14 @@ Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle
 
 				case TICK_1MS:
 
-//					if (config.parametro == RESISTENCIA)
-//						//medir_r(hadc1); para usar medir r y medir c hay q pasarle handle_adc, pero no esta pasada a esta funcion, hay q corregir eso antes de descomentar
-//					else if (config.parametro == CAPACITANCIA) //el checkeo de condicion es redundante pero se entiende mejor, depsues lo podemos borrar
-//						//medir_c(hadc1);
+					if (config.parametro == RESISTENCIA)
+						medir_r(handle_adc); // para usar medir r y medir c hay q pasarle handle_adc, pero no esta pasada a esta funcion, hay q corregir eso antes de descomentar
+					else if (config.parametro == CAPACITANCIA) //el checkeo de condicion es redundante pero se entiende mejor, depsues lo podemos borrar
+						medir_c(handle_adc);
+
+//					char buffer[20];
+//					snprintf(buffer, 20, "%d r\n", (int)r_medida);
+//					HAL_UART_Transmit(handle_uart, (uint8_t*)buffer, 20, HAL_MAX_DELAY);
 
 					UART_mostrar_menu(menu_medicion, handle_uart);
 

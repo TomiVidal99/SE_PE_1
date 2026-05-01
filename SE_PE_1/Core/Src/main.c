@@ -35,6 +35,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define COMANDO_BUFFER_SIZE (60)
+#define DEBOUNCER_TIMOUT_MS (1000)
 
 /* USER CODE END PD */
 
@@ -67,8 +68,12 @@ static void MX_ADC1_Init(void);
 char comando_buffer;
 
 volatile Configuracion_t config = {
-    .parametro = DEFAULT_PARAMETRO,
-    .modo = DEFAULT_MODO,
+//    .parametro = DEFAULT_PARAMETRO,
+//    .modo = DEFAULT_MODO,
+//	.comando = OPCION_1,
+
+    .parametro = CAPACITANCIA,
+    .modo = CONTINUO,
 	.comando = OPCION_1,
 };
 
@@ -77,6 +82,7 @@ volatile uint32_t nuevo_comando = 0;
 volatile uint32_t btn_menu = 0;
 volatile uint32_t r_medida = 0;
 volatile uint32_t c_medida = 0;
+volatile uint32_t btn_debouncer = 0;
 /* USER CODE END 0 */
 
 /**
@@ -131,6 +137,8 @@ int main(void)
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
+		btn_debouncer++;
+
 	    if (nuevo_comando){ //Atajo el flag del interrupt de la uart.
 
 			switch (comando_buffer) {
@@ -143,25 +151,25 @@ int main(void)
 			default:
 				break;
 		}
-		estado_actual = FSM_general(estado_actual, NUEVO_COMANDO, &huart1);
+		estado_actual = FSM_general(estado_actual, NUEVO_COMANDO, &huart1, &hadc1);
 		HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
 		nuevo_comando = 0;
 	    }
 
 		if (btn_menu){ //Atajo el flag del interrupt del boton
 
-			estado_actual = FSM_general(estado_actual, BOTON_MENU, &huart1);
+			estado_actual = FSM_general(estado_actual, BOTON_MENU, &huart1, &hadc1);
 			btn_menu = 0;
 		}
 
-
-
-	  if (tick_100ms_counter - HAL_GetTick() > 100) {
-		  estado_actual = FSM_general(estado_actual, TICK_100MS, &huart1);
+	  if (HAL_GetTick() - tick_100ms_counter > 100) {
+		  estado_actual = FSM_general(estado_actual, TICK_100MS, &huart1, &hadc1);
+		  tick_100ms_counter = HAL_GetTick();
 	  }
 
-	  if (tick_1ms_counter - HAL_GetTick() > 1) {
-		  estado_actual = FSM_general(estado_actual, TICK_1MS, &huart1);
+	  if (HAL_GetTick() - tick_1ms_counter > 1) {
+		  estado_actual = FSM_general(estado_actual, TICK_1MS, &huart1, &hadc1);
+		  tick_1ms_counter = HAL_GetTick();
 	  }
 
   }
@@ -355,8 +363,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   /* Prevent unused argument(s) compilation warning */
-  if (GPIO_Pin == BTN_MENU_Pin){
-	  btn_menu = 1; //Enciendo flag de que se presiono el boton menu xd
+  if (GPIO_Pin == BTN_MENU_Pin && (HAL_GetTick() - btn_debouncer) >= DEBOUNCER_TIMOUT_MS){
+	  btn_menu = 1; //Enciendo flag de que se presiono el boton menu
+	  btn_debouncer = HAL_GetTick();
   }
   /* NOTE: This function Should not be modified, when the callback is needed,
            the HAL_GPIO_EXTI_Callback could be implemented in the user file
