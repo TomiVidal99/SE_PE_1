@@ -2,4 +2,9 @@
 
 ## TODO
 
-- [ ] Arreglar spamming del botón.
+- [ ] Arreglar medir capacidad, fuera de rango.
+
+## Mejoras / posibles features
+
+- [ ] Agregar medir tensión.
+- [ ] Agregar auto rango de capacidad?
