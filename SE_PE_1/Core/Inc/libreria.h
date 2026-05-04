@@ -14,12 +14,13 @@
 #define VCC_MV (3270)
 #define VALOR_RESISTOR_330_OHMS (331)
 #define VALOR_RESISTOR_10K_OHMS (9920)
-#define VALOR_RESISTOR_1M_OHMS (994000) // TODO: como manejamos esta proporcion?
-#define VALOR_RESISTOR_1M_KOHMS (994) // TODO: como manejamos esta proporcion?
+#define VALOR_RESISTOR_1M_KOHMS (999) // TODO: como manejamos esta proporcion?
+#define VALOR_RESISTOR_1M_OHMS (VALOR_RESISTOR_1M_KOHMS * 1000) // TODO: como manejamos esta proporcion?
 
 #define VCC_AL_95_PORCIENTO (0.95*VCC_MV)
 #define VCC_AL_63_PORCIENTO (0.63*VCC_MV)
-#define VCC_AL_2_PORCIENTO (0.08*VCC_MV)
+#define VCC_AL_2_PORCIENTO (0.02*VCC_MV)
+#define MAX_CUENTAS_C_DESCARGA_C (100 * 1000)
 
 typedef enum {
 	RESISTOR_330,
@@ -98,7 +99,7 @@ typedef enum {
 // TODO: las descripciones de qué hace cada función iría acá en realidad
 void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart);
 Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart);
-uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc);
+uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc, uint32_t cantidad_muestras);
 void set_configuracion(Configurables_t configurable, Comando_t comando);
 void medir_c(ADC_HandleTypeDef *handle_adc);
 void medir_r(ADC_HandleTypeDef *handle_adc);

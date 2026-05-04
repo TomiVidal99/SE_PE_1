@@ -32,43 +32,52 @@ void medir_c(ADC_HandleTypeDef *handle_adc){
 
 	// TODO: preguntar orden de WritePin
 	HAL_GPIO_WritePin(GPIO330R_GPIO_Port, GPIO330R_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIO10K_GPIO_Port, GPIO10K_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_RESET);
 
-	//330r como salida en bajo (no pull up ni pull down)
 	GPIO_InitStruct.Pin = GPIO330R_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIO330R_GPIO_Port, &GPIO_InitStruct);
 
+//	GPIO330R_GPIO_Port->CRL |= GPIO_CRL_MODE0; // Configurado a la max velocidad
+//	GPIO330R_GPIO_Port->CRL &= ~GPIO_CRL_CNF0; // output push-pull
+//	GPIO330R_GPIO_Port->BSRR = GPIO_BSRR_BR5; // se pone en bajo la salida
+
+
 	GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO1M_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIO10K_GPIO_Port, &GPIO_InitStruct);
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-	HAL_Delay(5);
+	HAL_Delay(10);
 
 	// Se mide hasta que se llegue a un valor menor al 2%
 	uint32_t muestra = VCC_MV;
 	uint32_t contador_fallo = 0;
-	while (muestra > VCC_AL_2_PORCIENTO && contador_fallo < (100*100)){
-		muestra = ADC_muestrear(handle_adc);
+	while (muestra > VCC_AL_2_PORCIENTO){
 //		HAL_ADC_Start(handle_adc);
-//		HAL_ADC_PollForConversion(handle_adc, 1000);
+//		HAL_ADC_PollForConversion(handle_adc, HAL_MAX_DELAY);
 //		muestra = HAL_ADC_GetValue(handle_adc);
+//		muestra= (muestra * (uint32_t)3300) / ((uint32_t)4095);
+
+		muestra = ADC_muestrear(handle_adc, 2);
 
 		contador_fallo++;
-	}
-
-	if (contador_fallo >= (100*100)) {
-		// TODO: tirar algún error acá
-		c_medida = -1;
-		return;
+		if (contador_fallo >= MAX_CUENTAS_C_DESCARGA_C) {
+			// TODO: tirar algún error acá
+			c_medida = -1;
+			return;
+		}
 	}
 
 	// Se setea GPIO1M como salida en bajo y las otras dos en alta impendacia
+	HAL_GPIO_WritePin(GPIO330R_GPIO_Port, GPIO330R_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIO10K_GPIO_Port, GPIO10K_Pin, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_RESET);
-	//330r como salida en bajo (no pull up ni pull down)
+
+	//1M como salida en bajo (no pull up ni pull down)
 	GPIO_InitStruct.Pin = GPIO1M_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
@@ -78,32 +87,44 @@ void medir_c(ADC_HandleTypeDef *handle_adc){
 	GPIO_InitStruct.Pin = GPIO330R_Pin|GPIO10K_Pin;
 	GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+	HAL_Delay(1);
+
 	// se hace la medición de capacidad
-#define MAX_CUENTAS_CAPACIDAD (5 * 1000 * 1000)
+#define MAX_CUENTAS_CAPACIDAD (6 * 500)
 	uint32_t contador_de_muestras = 0;
 	muestra = 0;
+	uint32_t delay_counter;
+#define DELAY_US (3775)
+
 	HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_SET);
-
 	while (muestra < VCC_AL_63_PORCIENTO) {
-//		muestra = ADC_muestrear(handle_adc);
-		HAL_ADC_Start(handle_adc);
-		HAL_ADC_PollForConversion(handle_adc, 1000);
-		muestra = HAL_ADC_GetValue(handle_adc);
+		HAL_GPIO_TogglePin(DEBUG_PIN_GPIO_Port, DEBUG_PIN_Pin);
+		muestra = ADC_muestrear(handle_adc, 10);
 
-		HAL_Delay(1);
+//		HAL_ADC_Start(handle_adc);
+//		HAL_ADC_PollForConversion(handle_adc, 1000);
+//		muestra = HAL_ADC_GetValue(handle_adc);
+
+//		HAL_Delay(1);
+
+		for (delay_counter = 0; delay_counter < DELAY_US; delay_counter++)
+			__asm__("nop");
 
 		contador_de_muestras++;
 		if (contador_de_muestras > MAX_CUENTAS_CAPACIDAD) {
 			// TODO: hay que tener un mensaje "FUERA DE ESCALA"
+			c_medida = -10;
 			return;
 		}
 	}
 
-	c_medida = contador_de_muestras;
+	c_medida = contador_de_muestras * (1000 / VALOR_RESISTOR_1M_KOHMS);
 //	c_medida = (contador_de_muestras * 1000) / VALOR_RESISTOR_1M_KOHMS;
+
+	HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_RESET);
+
 
 	return;
 
@@ -199,7 +220,7 @@ void medir_r(ADC_HandleTypeDef *handle_adc){
 	  //Cambio la configuracion de los pines
 
 	  set_resistencia(RESISTOR_330);
-	  uint32_t muestra = ADC_muestrear(handle_adc);
+	  uint32_t muestra = ADC_muestrear(handle_adc, ADC_N_MUESTRAS);
 	  if (muestra < VCC_AL_95_PORCIENTO) {
 		  r_medida = (VALOR_RESISTOR_330_OHMS * muestra) / (VCC_MV - muestra);
 //		  config.unidad = OHMS;
@@ -208,7 +229,7 @@ void medir_r(ADC_HandleTypeDef *handle_adc){
 
 
 	  set_resistencia(RESISTOR_10K);
-	  muestra = ADC_muestrear(handle_adc);
+	  muestra = ADC_muestrear(handle_adc, ADC_N_MUESTRAS);
 	  if (muestra < VCC_AL_95_PORCIENTO) {
 		  r_medida = (VALOR_RESISTOR_10K_OHMS * muestra) / (VCC_MV - muestra);
 //		  config.unidad = OHMS;
@@ -216,7 +237,7 @@ void medir_r(ADC_HandleTypeDef *handle_adc){
 	  }
 
 	  set_resistencia(RESISTOR_1M);
-	  muestra = ADC_muestrear(handle_adc);
+	  muestra = ADC_muestrear(handle_adc, ADC_N_MUESTRAS);
 	  if (muestra == VCC_MV) {
 		  r_medida = VALOR_RESISTOR_1M_OHMS;
 		  return;
@@ -227,12 +248,12 @@ void medir_r(ADC_HandleTypeDef *handle_adc){
 	  return;
 }
 
-uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc){
+uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc, uint32_t cantidad_muestras){
 
 	//Realiza una lectura de ADC_N_MUESTRAS muestras y devuelve el promedio
 	uint32_t acc = 0;
 
-	for (uint32_t i=0; i<ADC_N_MUESTRAS; i++) {
+	for (uint32_t i=0; i<cantidad_muestras; i++) {
 
 		HAL_ADC_Start(handle_adc);
 		HAL_ADC_PollForConversion(handle_adc, 1000);
@@ -241,7 +262,7 @@ uint32_t ADC_muestrear(ADC_HandleTypeDef *handle_adc){
 	}
 
 	//Convierto a mV, calculo promedio y retorno
-	return (acc * (uint32_t)3300) / ((uint32_t)4095 * ADC_N_MUESTRAS);
+	return (acc * (uint32_t)3300) / ((uint32_t)4095 * cantidad_muestras);
 }
 
 //UART
@@ -354,7 +375,7 @@ void UART_mostrar_menu(Menu_t menu, UART_HandleTypeDef *handle_uart){
 			} else {
 			    parametro_string = "CAPACITANCIA";
 			    valor = c_medida;
-			    unidad = "F";
+			    unidad = "nF";
 			}
 
 			// Armo el mensaje
@@ -575,3 +596,4 @@ Estado_t FSM_general(Estado_t estado, Event_t evento, UART_HandleTypeDef *handle
 				return estado;
 	}
 }
+

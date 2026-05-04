@@ -70,6 +70,8 @@ void Error_Handler(void);
 #define GPIO10K_GPIO_Port GPIOA
 #define GPIO1M_Pin GPIO_PIN_7
 #define GPIO1M_GPIO_Port GPIOA
+#define DEBUG_PIN_Pin GPIO_PIN_8
+#define DEBUG_PIN_GPIO_Port GPIOB
 
 /* USER CODE BEGIN Private defines */
 
