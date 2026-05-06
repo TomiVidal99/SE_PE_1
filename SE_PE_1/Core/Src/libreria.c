@@ -57,10 +57,6 @@ void medir_c(ADC_HandleTypeDef *handle_adc){
 	uint32_t muestra = VCC_MV;
 	uint32_t contador_fallo = 0;
 	while (muestra > VCC_AL_2_PORCIENTO){
-//		HAL_ADC_Start(handle_adc);
-//		HAL_ADC_PollForConversion(handle_adc, HAL_MAX_DELAY);
-//		muestra = HAL_ADC_GetValue(handle_adc);
-//		muestra= (muestra * (uint32_t)3300) / ((uint32_t)4095);
 
 		muestra = ADC_muestrear(handle_adc, 2);
 
