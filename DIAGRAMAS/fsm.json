@@ -2,8 +2,8 @@
   "states": [
     {
       "id": 1,
-      "x": 825,
-      "y": -139,
+      "x": 691,
+      "y": -847,
       "label": "MENU_INFO",
       "action": "",
       "startAction": "contador = 0",
@@ -57,10 +57,10 @@
     },
     {
       "id": 16,
-      "x": 130,
-      "y": 1411,
-      "label": "CAPACITANCIA",
-      "action": "",
+      "x": 117,
+      "y": -217,
+      "label": "DESCARGA",
+      "action": "muestra = ADC_muestrear()",
       "startAction": "",
       "radius": 100,
       "isStart": false,
@@ -142,6 +142,17 @@
       "radius": 18,
       "isStart": false,
       "isPseudostate": true
+    },
+    {
+      "id": 28,
+      "x": 99,
+      "y": 203,
+      "label": "CARGA",
+      "action": "muestra = ADC_muestrear()",
+      "startAction": "",
+      "radius": 100,
+      "isStart": false,
+      "isPseudostate": false
     }
   ],
   "transitions": [
@@ -189,8 +200,8 @@
       "startAnchorAngle": 1.5707963267948966,
       "endAnchorAngle": -2.154025696903788,
       "labelOffset": {
-        "x": -18,
-        "y": 87
+        "x": 26,
+        "y": 35
       }
     },
     {
@@ -263,8 +274,8 @@
       "label": "BTN_MENU[config.modo = resistencia]",
       "action": "[set_resistencia(RESISTOR_330)]",
       "controlOffset": {
-        "x": -194,
-        "y": -172
+        "x": -586,
+        "y": -572
       },
       "startAnchorAngle": -2.68074615771108,
       "endAnchorAngle": -0.4985679056382179,
@@ -283,10 +294,10 @@
         "y": -62
       },
       "startAnchorAngle": 2.896613990462929,
-      "endAnchorAngle": -1.0971987974012853,
+      "endAnchorAngle": -1.2145766713987465,
       "labelOffset": {
-        "x": 0,
-        "y": 0
+        "x": 138,
+        "y": 46
       }
     },
     {
@@ -439,8 +450,8 @@
       "label": "BTN_MENU[UART_mostrar_menu(menu_info)]",
       "action": "contador = 0",
       "controlOffset": {
-        "x": -516,
-        "y": -318
+        "x": -668,
+        "y": -474
       },
       "startAnchorAngle": -1.551190995937692,
       "endAnchorAngle": -2.9441970937399127,
@@ -496,9 +507,105 @@
         "x": 0,
         "y": 0
       }
+    },
+    {
+      "from": 16,
+      "to": 16,
+      "label": "[muestra >= VCC_AL_2_PORCIENTO]",
+      "action": "contador_fallas++",
+      "controlOffset": {
+        "x": 6,
+        "y": 3
+      },
+      "startAnchorAngle": -0.40594998694829726,
+      "endAnchorAngle": 0.44783864946123264,
+      "labelOffset": {
+        "x": 181,
+        "y": -1
+      }
+    },
+    {
+      "from": 16,
+      "to": 28,
+      "label": "[muestra< VCC_AL_2_PORCIENTO]",
+      "action": "contador_fallas  = 0",
+      "controlOffset": {
+        "x": -16,
+        "y": -12
+      },
+      "startAnchorAngle": 1.8157749899217608,
+      "endAnchorAngle": -1.627339763739714,
+      "labelOffset": {
+        "x": 52,
+        "y": 34
+      }
+    },
+    {
+      "from": 28,
+      "to": 28,
+      "label": "TICK_1MS",
+      "action": "contador_fallas++",
+      "controlOffset": {
+        "x": 39,
+        "y": -6
+      },
+      "startAnchorAngle": -0.4636476090008061,
+      "endAnchorAngle": 0.5255837935516101,
+      "labelOffset": {
+        "x": 99,
+        "y": 3
+      }
+    },
+    {
+      "from": 28,
+      "to": 23,
+      "label": "[muestra >= VCC_AL_63_PORCIENTO || contador_fallas >= MAX_DESCARGA]",
+      "action": "",
+      "controlOffset": {
+        "x": 0,
+        "y": 0
+      },
+      "startAnchorAngle": null,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 111,
+        "y": 43
+      }
+    },
+    {
+      "from": 16,
+      "to": 23,
+      "label": "[contador_fallas >= MAX_DESCARGA]",
+      "action": "",
+      "controlOffset": {
+        "x": -104,
+        "y": -136
+      },
+      "startAnchorAngle": 3.0691390575012045,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": -14,
+        "y": 53
+      }
+    },
+    {
+      "from": 23,
+      "to": 23,
+      "label": "",
+      "action": "",
+      "controlOffset": {
+        "x": 0,
+        "y": 0
+      },
+      "startAnchorAngle": null,
+      "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
     }
   ],
-  "stateIdCounter": 28,
+  "stateIdCounter": 29,
   "isDarkTheme": true,
   "simContext": {
     "comando": 0,
@@ -513,6 +620,10 @@
     "UART_mostrar_menu": 0,
     "menu_info": 0,
     "contador": 0,
-    "continuo": 0
+    "continuo": 0,
+    "VCC_AL_2_PORCIENTO": 0,
+    "VCC_AL_63_PORCIENTO": 0,
+    "contador_fallas": 0,
+    "MAX_DESCARGA": 0
   }
 }
