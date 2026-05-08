@@ -2,8 +2,8 @@
   "states": [
     {
       "id": 1,
-      "x": 691,
-      "y": -847,
+      "x": 804,
+      "y": -966,
       "label": "MENU_INFO",
       "action": "",
       "startAction": "contador = 0",
@@ -13,8 +13,8 @@
     },
     {
       "id": 2,
-      "x": 1187,
-      "y": 391,
+      "x": 1532,
+      "y": -322,
       "label": "MENU_MODO",
       "action": "",
       "startAction": "",
@@ -24,8 +24,8 @@
     },
     {
       "id": 12,
-      "x": 1658,
-      "y": 527,
+      "x": 2286,
+      "y": 536,
       "label": "",
       "action": "",
       "startAction": "",
@@ -35,8 +35,8 @@
     },
     {
       "id": 14,
-      "x": 1030,
-      "y": 603,
+      "x": 1360,
+      "y": -42,
       "label": "MENU_PARAM",
       "action": "",
       "startAction": "",
@@ -57,10 +57,10 @@
     },
     {
       "id": 16,
-      "x": 117,
-      "y": -217,
-      "label": "DESCARGA",
-      "action": "muestra = ADC_muestrear()",
+      "x": 426,
+      "y": -134,
+      "label": "C_DESCARGA",
+      "action": "muestra = ADC_Get()",
       "startAction": "",
       "radius": 100,
       "isStart": false,
@@ -92,7 +92,7 @@
       "id": 23,
       "x": -457,
       "y": 477,
-      "label": "MOSTRAR_MED",
+      "label": "R_MOSTRAR",
       "action": "",
       "startAction": "",
       "radius": 100,
@@ -133,22 +133,22 @@
       "isPseudostate": true
     },
     {
-      "id": 27,
-      "x": -606,
-      "y": 243,
-      "label": "",
-      "action": "",
+      "id": 28,
+      "x": 739,
+      "y": 294,
+      "label": "C_CARGA",
+      "action": "muestra = ADC_Get()",
       "startAction": "",
-      "radius": 18,
+      "radius": 100,
       "isStart": false,
-      "isPseudostate": true
+      "isPseudostate": false
     },
     {
-      "id": 28,
-      "x": 99,
-      "y": 203,
-      "label": "CARGA",
-      "action": "muestra = ADC_muestrear()",
+      "id": 29,
+      "x": 272,
+      "y": 345,
+      "label": "C_MOSTRAR",
+      "action": "",
       "startAction": "",
       "radius": 100,
       "isStart": false,
@@ -178,8 +178,8 @@
       "label": "",
       "action": "UART_mostrar_menu(menu_info)",
       "controlOffset": {
-        "x": 218,
-        "y": -200
+        "x": 1042,
+        "y": -172
       },
       "startAnchorAngle": -1.2120256565243244,
       "endAnchorAngle": 0.02499479361892016,
@@ -245,7 +245,7 @@
         "x": -62,
         "y": -54
       },
-      "startAnchorAngle": 0.4775839889069629,
+      "startAnchorAngle": 1.4833009859925053,
       "endAnchorAngle": -2.4917222041778455,
       "labelOffset": {
         "x": -1,
@@ -261,7 +261,7 @@
         "x": 48,
         "y": -70
       },
-      "startAnchorAngle": -0.18394345653717517,
+      "startAnchorAngle": 0.06569480155246474,
       "endAnchorAngle": -2.1587989303424644,
       "labelOffset": {
         "x": -35,
@@ -288,7 +288,7 @@
       "from": 1,
       "to": 16,
       "label": "BTN_MENU[config.modo = capacitancia]",
-      "action": "",
+      "action": "configurar_descarga()",
       "controlOffset": {
         "x": -134,
         "y": -62
@@ -296,15 +296,15 @@
       "startAnchorAngle": 2.896613990462929,
       "endAnchorAngle": -1.2145766713987465,
       "labelOffset": {
-        "x": 138,
-        "y": 46
+        "x": 21,
+        "y": 80
       }
     },
     {
       "from": 15,
       "to": 24,
-      "label": "MUESTRA_NUEVA",
-      "action": "",
+      "label": "TICK_100US",
+      "action": "muestra = ADC_Get()",
       "controlOffset": {
         "x": -28,
         "y": -40
@@ -335,8 +335,8 @@
     {
       "from": 21,
       "to": 25,
-      "label": "MUESTRA_NUEVA",
-      "action": "",
+      "label": "TICK_100US",
+      "action": "muestra = ADC_Get()",
       "controlOffset": {
         "x": -38,
         "y": 18
@@ -367,8 +367,8 @@
     {
       "from": 22,
       "to": 26,
-      "label": "MUESTRA_NUEVA",
-      "action": "",
+      "label": "TICK_100US",
+      "action": "muestra = ADC_Get()",
       "controlOffset": {
         "x": 38,
         "y": 28
@@ -461,89 +461,41 @@
       }
     },
     {
-      "from": 27,
-      "to": 15,
-      "label": "[contador > 99 && config.modo = continuo]",
-      "action": "contador = 0",
-      "controlOffset": {
-        "x": 8,
-        "y": -18
-      },
-      "startAnchorAngle": null,
-      "endAnchorAngle": null,
-      "labelOffset": {
-        "x": 48,
-        "y": 37
-      }
-    },
-    {
-      "from": 23,
-      "to": 27,
-      "label": "TICK1MS",
-      "action": "",
-      "controlOffset": {
-        "x": 26,
-        "y": -26
-      },
-      "startAnchorAngle": -1.9958365196675518,
-      "endAnchorAngle": 0.5123894603107377,
-      "labelOffset": {
-        "x": 0,
-        "y": -1
-      }
-    },
-    {
-      "from": 27,
-      "to": 23,
-      "label": "",
-      "action": "contador++",
-      "controlOffset": {
-        "x": -30,
-        "y": 26
-      },
-      "startAnchorAngle": 1.6756732655251305,
-      "endAnchorAngle": -2.222249554245682,
-      "labelOffset": {
-        "x": 0,
-        "y": 0
-      }
-    },
-    {
       "from": 16,
       "to": 16,
-      "label": "[muestra >= VCC_AL_2_PORCIENTO]",
+      "label": "TICK_100US[muestra >= VCC_AL_2_PORCIENTO]",
       "action": "contador_fallas++",
       "controlOffset": {
         "x": 6,
         "y": 3
       },
-      "startAnchorAngle": -0.40594998694829726,
-      "endAnchorAngle": 0.44783864946123264,
+      "startAnchorAngle": -0.9232737919585624,
+      "endAnchorAngle": -0.0582673029695334,
       "labelOffset": {
-        "x": 181,
-        "y": -1
+        "x": 226,
+        "y": -5
       }
     },
     {
       "from": 16,
       "to": 28,
-      "label": "[muestra< VCC_AL_2_PORCIENTO]",
-      "action": "contador_fallas  = 0",
+      "label": "TICK_100US[muestra< VCC_AL_2_PORCIENTO]",
+      "action": "contador_fallas  = 0; configurar_carga()",
       "controlOffset": {
-        "x": -16,
-        "y": -12
+        "x": 128,
+        "y": -94
       },
-      "startAnchorAngle": 1.8157749899217608,
+      "startAnchorAngle": 0.25690652684343546,
       "endAnchorAngle": -1.627339763739714,
       "labelOffset": {
-        "x": 52,
-        "y": 34
+        "x": 117,
+        "y": 67
       }
     },
     {
       "from": 28,
       "to": 28,
-      "label": "TICK_1MS",
+      "label": "TICK_1MS[muestra < VCC_AL_63_PORCIENTO || contador_fallas < MAX_DESCARGA]",
       "action": "contador_fallas++",
       "controlOffset": {
         "x": 39,
@@ -552,46 +504,46 @@
       "startAnchorAngle": -0.4636476090008061,
       "endAnchorAngle": 0.5255837935516101,
       "labelOffset": {
-        "x": 99,
-        "y": 3
+        "x": 325,
+        "y": -6
       }
     },
     {
       "from": 28,
-      "to": 23,
-      "label": "[muestra >= VCC_AL_63_PORCIENTO || contador_fallas >= MAX_DESCARGA]",
-      "action": "",
+      "to": 29,
+      "label": "TICK_1MS[muestra >= VCC_AL_63_PORCIENTO || contador_fallas >= MAX_DESCARGA]",
+      "action": "UART_Mostrar_Menu(C)",
       "controlOffset": {
-        "x": 0,
-        "y": 0
+        "x": -6,
+        "y": 60
       },
       "startAnchorAngle": null,
-      "endAnchorAngle": null,
+      "endAnchorAngle": 0.0380768255898034,
       "labelOffset": {
-        "x": 111,
-        "y": 43
+        "x": 86,
+        "y": 69
       }
     },
     {
       "from": 16,
-      "to": 23,
+      "to": 29,
       "label": "[contador_fallas >= MAX_DESCARGA]",
       "action": "",
       "controlOffset": {
-        "x": -104,
-        "y": -136
+        "x": -216,
+        "y": -14
       },
-      "startAnchorAngle": 3.0691390575012045,
-      "endAnchorAngle": null,
+      "startAnchorAngle": 2.7666009264564244,
+      "endAnchorAngle": -2.5888954619544893,
       "labelOffset": {
-        "x": -14,
-        "y": 53
+        "x": 0,
+        "y": 0
       }
     },
     {
       "from": 23,
-      "to": 23,
-      "label": "",
+      "to": 15,
+      "label": "TICK_100MS[config.modo = CONTINUO]",
       "action": "",
       "controlOffset": {
         "x": 0,
@@ -599,13 +551,29 @@
       },
       "startAnchorAngle": null,
       "endAnchorAngle": null,
+      "labelOffset": {
+        "x": 0,
+        "y": 0
+      }
+    },
+    {
+      "from": 29,
+      "to": 16,
+      "label": "TICK_100MS[config.modo == CONTINJUO]",
+      "action": "",
+      "controlOffset": {
+        "x": -468,
+        "y": 18
+      },
+      "startAnchorAngle": 3.141592653589793,
+      "endAnchorAngle": -2.90142164572962,
       "labelOffset": {
         "x": 0,
         "y": 0
       }
     }
   ],
-  "stateIdCounter": 29,
+  "stateIdCounter": 32,
   "isDarkTheme": true,
   "simContext": {
     "comando": 0,
@@ -620,10 +588,11 @@
     "UART_mostrar_menu": 0,
     "menu_info": 0,
     "contador": 0,
-    "continuo": 0,
     "VCC_AL_2_PORCIENTO": 0,
     "VCC_AL_63_PORCIENTO": 0,
     "contador_fallas": 0,
-    "MAX_DESCARGA": 0
+    "MAX_DESCARGA": 0,
+    "CONTINJUO": 0,
+    "CONTINUO": 0
   }
 }
