@@ -9,6 +9,20 @@
  * TODO: cambiar los pines y puertos a algo más modificable por el usuario
  */
 
+#define DEFAULT_MODO UNICO
+#define DEFAULT_PARAMETRO RESISTENCIA
+#define DEFUALT_COMANDO OPCION_1
+
+#define VCC_MV (3270)
+#define VALOR_RESISTOR_330_OHMS (331)
+#define VALOR_RESISTOR_10K_OHMS (9920)
+#define VALOR_RESISTOR_1M_KOHMS (999) // TODO: como manejamos esta proporcion?
+#define VALOR_RESISTOR_1M_OHMS (VALOR_RESISTOR_1M_KOHMS * 1000) // TODO: como manejamos esta proporcion?
+
+#define VCC_AL_95_PORCIENTO (0.95*VCC_MV)
+#define VCC_AL_63_PORCIENTO (0.63*VCC_MV)
+#define VCC_AL_2_PORCIENTO (0.02*VCC_MV)
+
 #define DEBOUNCER_BTN_TIMOUT_MS (50)
 
 typedef enum {
@@ -60,12 +74,13 @@ typedef enum {
 	MENU_INFO,
 	MENU_MODO,
 	MENU_PARAM,
-	MOSTRAR_MED,
 	C_DESCARGA,
 	C_CARGA,
+	C_MOSTRAR,
 	R330,
 	R10K,
 	R1M,
+	R_MOSTRAR,
 } FSM_State;
 
 typedef enum {
@@ -73,7 +88,7 @@ typedef enum {
 	TICK_1MS,
 	TICK_100MS,
 	BTN_MENU,
-	UART_COMMAND
+	UART_COMMAND,
 } FSM_Signals;
 
 FSM_State FSM_General(FSM_State state, FSM_Signals signal);
@@ -101,6 +116,8 @@ Buffer_t buffer_muestras = {
 FSM_State estado_actual = {ESTADO_INICIAL};
 uint32_t contador_timer_1ms = 0;
 uint32_t contador_timer_10ms = 0;
+uint32_t contador_fallas = 0;
+uint32_t contador_carga_capacitor = 0;
 
 void Multimetro_activar(void) {
 
@@ -261,88 +278,148 @@ void CALLBACK_UART(void){
 }
 
 FSM_State FSM_General(FSM_State state, FSM_Signals signal) {
-	switch (state) {
-		case MENU_INFO:
-			if (signal == UART_COMMAND) {
-//				UART_mostrar_menu(menu, handle_uart
-				return MENU_PARAM;
-			} else if (signal == TICK_1MS) {
-				return MENU_INFO;
-			} else if (signal == BTN_MENU) {
-				return MENU_INFO;
-			}
-			break;
-		case MENU_MODO:
-			if (signal == UART_COMMAND) {
-				return MENU_INFO;
-			} else if (signal == TICK_1MS) {
-				return MENU_INFO;
-			} else if (signal == BTN_MENU) {
-				return MENU_INFO;
-			}
-			break;
-		case MENU_PARAM:
-			if (signal == UART_COMMAND) {
-				return MENU_INFO;
-			} else if (signal == TICK_1MS) {
-				return MENU_INFO;
-			} else if (signal == BTN_MENU) {
-				return MENU_INFO;
-			}
-			break;
-		case MOSTRAR_MED:
-			if (signal == UART_COMMAND) {
-				return MENU_INFO;
-			} else if (signal == TICK_1MS) {
-				return MENU_INFO;
-			} else if (signal == BTN_MENU) {
-				return MENU_INFO;
-			}
-			break;
-		case CAP_DESCARGA:
-			if (signal == UART_COMMAND) {
-				return MENU_INFO;
-			} else if (signal == TICK_1MS) {
-				return MENU_INFO;
-			} else if (signal == BTN_MENU) {
-				return MENU_INFO;
-			}
-			break;
-		case CAP_CARGA:
-			if (signal == UART_COMMAND) {
-				return MENU_INFO;
-			} else if (signal == TICK_1MS) {
-				return MENU_INFO;
-			} else if (signal == BTN_MENU) {
-				return MENU_INFO;
-			}
-			break;
-		case R330:
-			if (signal == UART_COMMAND) {
-				return MENU_INFO;
-			} else if (signal == TICK_1MS) {
-				return MENU_INFO;
-			} else if (signal == BTN_MENU) {
-				return MENU_INFO;
-			}
-			break;
-		case R10K:
-			if (signal == UART_COMMAND) {
-				return MENU_INFO;
-			} else if (signal == TICK_1MS) {
-				return MENU_INFO;
-			} else if (signal == BTN_MENU) {
-				return MENU_INFO;
-			}
-			break;
-		case R1M:
-			if (signal == UART_COMMAND) {
-				return MENU_INFO;
-			} else if (signal == TICK_1MS) {
-				return MENU_INFO;
-			} else if (signal == BTN_MENU) {
-				return MENU_INFO;
-			}
-			break;
-	}
+  switch (state) {
+    case MENU_INFO:
+      if (signal == UART_COMMAND) {
+        UART_mostrar_menu(menu, handle_uart);
+        if (config.comando == OPCION_1) {
+          return MENU_MODO;
+        } else if (config.comando == OPCION_2) {
+          return MENU_PARAM;
+        }
+        return MENU_INFO;
+      } else if (signal == BTN_MENU) {
+        if (config.modo == RESISTENCIA) {
+          configurar_resistencia330(); // TODO
+          return R330;
+        } else if (config.modo == CAPACITANCIA) {
+          configurar_descarga(); // TODO 
+          return C_DESCARGA;
+        }
+        return MENU_INFO;
+      }
+      break;
+
+    case MENU_MODO:
+      if (signal == UART_COMMAND) {
+        if (config.comando == OPCION_1) {
+          config.modo = UNICO;
+        } else if (config.comando == OPCION_2) {
+          config.modo = CONTINUO;
+        }
+        return MENU_INFO;
+      } else if (signal == TICK_1MS) {
+        return MENU_INFO;
+      } else if (signal == BTN_MENU) {
+        return MENU_INFO;
+      }
+      break;
+
+    case MENU_PARAM:
+      if (signal == UART_COMMAND) {
+        if (config.comando == OPCION_1) {
+          config.parametro = RESISTENCIA;
+        } else if (config.comando == OPCION_2) {
+          config.parametro = CAPACITANCIA;
+        }
+        return MENU_INFO;
+      }
+      break;
+
+    case C_DESCARGA:
+      if (signal == UART_COMMAND) {
+        return MENU_INFO;
+      } else if (signal == TICK_100US) {
+#define GET_LATEST_SAMPLE (buffer_muestras.buffer[buffer_muestras.index])
+        if (GET_LATEST_SAMPLE >= VCC_AL_2_PORCIENTO) {
+          contador_fallas++;
+#define MAX_CUENTAS_DESCARGA_CAPACITOR (10 * 1000 * 1000) // 10 segundos?
+          if (contador_fallas >= MAX_CUENTAS_DESCARGA_CAPACITOR) {
+            // valor_medicion = FALLO_NO_DESCARGO_EL_CAPACITOR
+            return C_MOSTRAR;
+          }
+        } else if (GET_LATEST_SAMPLE < VCC_AL_2_PORCIENTO) {
+          return C_CARGA;
+        }
+      } else if (signal == BTN_MENU) {
+        contador_fallas = 0;
+        return MENU_INFO;
+      }
+      break;
+
+    case C_CARGA:
+      if (signal == UART_COMMAND) {
+        return MENU_INFO;
+      } else if (signal == TICK_1MS) {
+        if (GET_LATEST_SAMPLE >= VCC_AL_63_PORCIENTO) {
+          contador_carga_capacitor = 0; 
+          return C_MOSTAR;
+        } else {
+          contador_carga_capacitor++;
+        }
+
+#define MAX_CUENTAS_CARGA_CAPACITOR (10 * 1000) // 10 segundos?
+        if (contador_carga_capacitor >= MAX_CUENTAS_CARGA_CAPACITOR){
+          contador_carga_capacitor = 0; 
+          return C_MOSTRAR;
+        }
+      } else if (signal == BTN_MENU) {
+        contador_carga_capacitor = 0
+        return MENU_INFO;
+      }
+      break;
+
+    case C_MOSTRAR:
+      // TODO: las funciones que cambian a C_MOSTRAR deberían
+      // llamar alguna funcion que imprima en pantalla
+      if (signal == TICK_100MS && config.modo == CONTINUO) {
+        configurar_descarga(); // TODO
+        return C_DESCARGA;
+      } else if (signal == BTN_MENU) {
+        return MENU_INFO;
+      }
+      break;
+
+    case R330:
+      if (signal == TICK_100US) {
+        if (GET_LATEST_SAMPLE > VCC_AL_95_PORCIENTO) {
+          return R10K;
+        }
+        return R_MOSTRAR;
+      } else if (signal == BTN_MENU) {
+
+        return MENU_INFO;
+      }
+      break;
+
+    case R10K:
+      if (signal == TICK_100US) {
+        if (GET_LATEST_SAMPLE > VCC_AL_95_PORCIENTO) {
+          return R1M;
+        }
+        return R_MOSTRAR;
+      } else if (signal == BTN_MENU) {
+
+        return MENU_INFO;
+      }
+      break;
+
+    case R1M:
+      if (signal == TICK_100US) {
+        return C_MOSTRAR;
+      } else if (signal == BTN_MENU) {
+        return MENU_INFO;
+      }
+      break;
+
+    case R_MOSTRAR:
+      if (signal == TICK_100US && config.modo == CONTINUO) {
+        return R330;
+      } else if (signal == BTN_MENU) {
+        return MENU_INFO;
+      }
+      break;
+  }
+
+  return state;
 }
