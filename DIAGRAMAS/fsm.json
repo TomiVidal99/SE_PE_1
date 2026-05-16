@@ -2,8 +2,8 @@
   "states": [
     {
       "id": 1,
-      "x": 804,
-      "y": -966,
+      "x": 535,
+      "y": -1083,
       "label": "MENU_INFO",
       "action": "",
       "startAction": "contador = 0",
@@ -13,8 +13,8 @@
     },
     {
       "id": 2,
-      "x": 1532,
-      "y": -322,
+      "x": 1923,
+      "y": -832,
       "label": "MENU_MODO",
       "action": "",
       "startAction": "",
@@ -24,8 +24,8 @@
     },
     {
       "id": 12,
-      "x": 2286,
-      "y": 536,
+      "x": 3010,
+      "y": -669,
       "label": "",
       "action": "",
       "startAction": "",
@@ -35,8 +35,8 @@
     },
     {
       "id": 14,
-      "x": 1360,
-      "y": -42,
+      "x": 1859,
+      "y": -459,
       "label": "MENU_PARAM",
       "action": "",
       "startAction": "",
@@ -134,8 +134,8 @@
     },
     {
       "id": 28,
-      "x": 739,
-      "y": 294,
+      "x": 1158,
+      "y": 271,
       "label": "C_CARGA",
       "action": "muestra = ADC_Get()",
       "startAction": "",
@@ -145,8 +145,8 @@
     },
     {
       "id": 29,
-      "x": 272,
-      "y": 345,
+      "x": 646,
+      "y": 700,
       "label": "C_MOSTRAR",
       "action": "",
       "startAction": "",
@@ -162,14 +162,14 @@
       "label": "nuevo_comando[comando = OPCION_1]",
       "action": "UART_mostrar_menu(menu_modo)",
       "controlOffset": {
-        "x": 40,
-        "y": 6
+        "x": 44,
+        "y": -86
       },
-      "startAnchorAngle": null,
-      "endAnchorAngle": -2.1368512355871583,
+      "startAnchorAngle": -0.08550529367820464,
+      "endAnchorAngle": -2.7069224384405484,
       "labelOffset": {
-        "x": 103,
-        "y": 6
+        "x": -36,
+        "y": 37
       }
     },
     {
@@ -178,14 +178,14 @@
       "label": "",
       "action": "UART_mostrar_menu(menu_info)",
       "controlOffset": {
-        "x": 1042,
-        "y": -172
+        "x": 344,
+        "y": -586
       },
       "startAnchorAngle": -1.2120256565243244,
-      "endAnchorAngle": 0.02499479361892016,
+      "endAnchorAngle": -0.8985491449879328,
       "labelOffset": {
         "x": 0,
-        "y": 0
+        "y": -28
       }
     },
     {
@@ -197,11 +197,11 @@
         "x": -84,
         "y": 42
       },
-      "startAnchorAngle": 1.5707963267948966,
-      "endAnchorAngle": -2.154025696903788,
+      "startAnchorAngle": 0.7900492926485575,
+      "endAnchorAngle": -3.0018837793006297,
       "labelOffset": {
-        "x": 26,
-        "y": 35
+        "x": -32,
+        "y": 83
       }
     },
     {
@@ -210,14 +210,14 @@
       "label": "nuevo_comando[comando=OPCION_2\nset_config(CAPACITANCIA)]",
       "action": "",
       "controlOffset": {
-        "x": 92,
-        "y": 290
+        "x": 106,
+        "y": 386
       },
       "startAnchorAngle": 0.9580796550154538,
       "endAnchorAngle": 1.849095985800008,
       "labelOffset": {
-        "x": 0,
-        "y": 0
+        "x": 6,
+        "y": 28
       }
     },
     {
@@ -232,8 +232,8 @@
       "startAnchorAngle": 0.2795221522836403,
       "endAnchorAngle": 2.761086276477428,
       "labelOffset": {
-        "x": -13,
-        "y": 19
+        "x": 26,
+        "y": 30
       }
     },
     {
@@ -242,11 +242,11 @@
       "label": "nuevo_comando[comando=OPCION_2\nset_config(CONTINUO)]",
       "action": "",
       "controlOffset": {
-        "x": -62,
-        "y": -54
+        "x": -140,
+        "y": 82
       },
-      "startAnchorAngle": 1.4833009859925053,
-      "endAnchorAngle": -2.4917222041778455,
+      "startAnchorAngle": 0.5949630479838942,
+      "endAnchorAngle": -2.819842099193151,
       "labelOffset": {
         "x": -1,
         "y": 20
@@ -258,14 +258,14 @@
       "label": "nuevo_comando[comando=OPCION_1\nset_config(UNICO)]",
       "action": "",
       "controlOffset": {
-        "x": 48,
-        "y": -70
+        "x": -114,
+        "y": -126
       },
-      "startAnchorAngle": 0.06569480155246474,
-      "endAnchorAngle": -2.1587989303424644,
+      "startAnchorAngle": -0.5959864658434344,
+      "endAnchorAngle": -2.2531128816696446,
       "labelOffset": {
-        "x": -35,
-        "y": -35
+        "x": 34,
+        "y": -60
       }
     },
     {
@@ -294,10 +294,10 @@
         "y": -62
       },
       "startAnchorAngle": 2.896613990462929,
-      "endAnchorAngle": -1.2145766713987465,
+      "endAnchorAngle": -1.8578786959820393,
       "labelOffset": {
-        "x": 21,
-        "y": 80
+        "x": 13,
+        "y": 46
       }
     },
     {
@@ -514,30 +514,30 @@
       "label": "TICK_1MS[muestra >= VCC_AL_63_PORCIENTO || contador_fallas >= MAX_DESCARGA]",
       "action": "UART_Mostrar_Menu(C)",
       "controlOffset": {
-        "x": -6,
-        "y": 60
+        "x": 232,
+        "y": 112
       },
-      "startAnchorAngle": null,
+      "startAnchorAngle": 1.6678926376928704,
       "endAnchorAngle": 0.0380768255898034,
       "labelOffset": {
-        "x": 86,
-        "y": 69
+        "x": 91,
+        "y": -24
       }
     },
     {
       "from": 16,
       "to": 29,
-      "label": "[contador_fallas >= MAX_DESCARGA]",
+      "label": "TICK_100US[contador_fallas >= MAX_DESCARGA]",
       "action": "",
       "controlOffset": {
         "x": -216,
         "y": -14
       },
-      "startAnchorAngle": 2.7666009264564244,
-      "endAnchorAngle": -2.5888954619544893,
+      "startAnchorAngle": 1.7980515874140781,
+      "endAnchorAngle": -2.363827929709838,
       "labelOffset": {
-        "x": 0,
-        "y": 0
+        "x": 38,
+        "y": -44
       }
     },
     {
@@ -559,17 +559,17 @@
     {
       "from": 29,
       "to": 16,
-      "label": "TICK_100MS[config.modo == CONTINJUO]",
+      "label": "TICK_100MS[config.modo == CONTINUO]",
       "action": "",
       "controlOffset": {
-        "x": -468,
-        "y": 18
+        "x": -454,
+        "y": 106
       },
       "startAnchorAngle": 3.141592653589793,
-      "endAnchorAngle": -2.90142164572962,
+      "endAnchorAngle": 2.561194466195919,
       "labelOffset": {
-        "x": 0,
-        "y": 0
+        "x": -22,
+        "y": 46
       }
     }
   ],
@@ -592,7 +592,6 @@
     "VCC_AL_63_PORCIENTO": 0,
     "contador_fallas": 0,
     "MAX_DESCARGA": 0,
-    "CONTINJUO": 0,
     "CONTINUO": 0
   }
 }

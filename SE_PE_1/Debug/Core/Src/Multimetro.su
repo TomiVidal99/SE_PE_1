@@ -1,0 +1,13 @@
+../Core/Src/Multimetro.c:165:6:UART_mostrar_menu	400	static
+../Core/Src/Multimetro.c:353:6:Multimetro_activar	8	static
+../Core/Src/Multimetro.c:460:6:HAL_TIM_PeriodElapsedCallback	16	static
+../Core/Src/Multimetro.c:466:6:HAL_GPIO_EXTI_Callback	16	static
+../Core/Src/Multimetro.c:474:6:HAL_UART_RxCpltCallback	16	static
+../Core/Src/Multimetro.c:478:11:FSM_General	16	static
+../Core/Src/Multimetro.c:655:6:Multimetro_procesar	8	static
+../Core/Src/Multimetro.c:696:6:configurar_carga	24	static
+../Core/Src/Multimetro.c:725:6:configurar_descarga	24	static
+../Core/Src/Multimetro.c:746:6:configurar_resistencia330	8	static
+../Core/Src/Multimetro.c:752:10:ADC_muestrear	24	static
+../Core/Src/Multimetro.c:769:6:set_resistencia	32	static
+../Core/Src/Multimetro.c:845:13:ObtenerUnidadEnString	4	static

@@ -1,30 +1,30 @@
-//		/*
-// * libreria.c
-// *
-// *  Created on: 16 abr 2026
-// *      Authors: Tomás Vidal & Ignacio Chantiri
-// */
-//
-//#include "libreria.h"
-//
-//#define ADC_N_MUESTRAS 32
-//
-//extern volatile Configuracion_t config;
-//extern volatile uint32_t r_medida;
-//extern volatile uint32_t c_medida;
-///*
-//void ADC_calibrar(ADC_HandleTypeDef *handle_adc){
-//
-//	// Dejo esta funcion comentada por si la hacemos mas adelante
-//	// pero creo que mide bastante bien asi q por ahora no
-//	ADC_ChannelConfTypeDef sConfig = {0};
-//	sConfig.Channel = ADC_CHANNEL_7;
-//	HAL_ADC_ConfigChannel(handle_adc, &sConfig);
-//	sConfig.Channel = ADC_CHANNEL_1;
-//
-//}
-//*/
-//
+////		/*
+//// * libreria.c
+//// *
+//// *  Created on: 16 abr 2026
+//// *      Authors: Tomás Vidal & Ignacio Chantiri
+//// */
+////
+////#include "libreria.h"
+////
+////#define ADC_N_MUESTRAS 32
+////
+////extern volatile Configuracion_t config;
+////extern volatile uint32_t r_medida;
+////extern volatile uint32_t c_medida;
+/////*
+////void ADC_calibrar(ADC_HandleTypeDef *handle_adc){
+////
+////	// Dejo esta funcion comentada por si la hacemos mas adelante
+////	// pero creo que mide bastante bien asi q por ahora no
+////	ADC_ChannelConfTypeDef sConfig = {0};
+////	sConfig.Channel = ADC_CHANNEL_7;
+////	HAL_ADC_ConfigChannel(handle_adc, &sConfig);
+////	sConfig.Channel = ADC_CHANNEL_1;
+////
+////}
+////*/
+////
 //void medir_c(ADC_HandleTypeDef *handle_adc){
 //	// Descarga
 //
@@ -125,6 +125,7 @@
 //	return;
 //
 //}
+//
 //
 //void set_resistencia(OutputResistor_Type resistorType){
 //

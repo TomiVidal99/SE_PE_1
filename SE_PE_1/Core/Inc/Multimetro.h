@@ -22,7 +22,8 @@
  *  SystemClock_Config();
  *
  *  Multimetro_activar();
- *
+ *  while (1) {
+ * 	Multimetro_procesar();
  * }
  *
  */
@@ -30,7 +31,9 @@
 /**
  * Este es el entry point de la librería.
  * Sólo con ejecutar una vez esta función
- * la librería está activa.
+ * la librería está activa. Luego se debe
+ * llamar Mutimetro_procesar en el background
+ * con periodo menor a 1ms
  *
  * IMPORTANTE:
  * Se incian internamente: Timer 1 y el ADC 1.
@@ -48,6 +51,8 @@
  * A9: USART1 TX
  * A10: USART1 RX
  */
+
 void Multimetro_activar(void);
+void Multimetro_procesar(void);
 
 #endif /* SRC_MULTIMETRO_H_ */

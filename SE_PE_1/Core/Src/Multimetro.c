@@ -9,6 +9,10 @@
  * TODO: cambiar los pines y puertos a algo más modificable por el usuario
  */
 
+#include "main.h"
+#include "stdio.h"
+#include "string.h"
+
 #define DEFAULT_MODO UNICO
 #define DEFAULT_PARAMETRO RESISTENCIA
 #define DEFUALT_COMANDO OPCION_1
@@ -23,12 +27,25 @@
 #define VCC_AL_63_PORCIENTO (0.63*VCC_MV)
 #define VCC_AL_2_PORCIENTO (0.02*VCC_MV)
 
-#define DEBOUNCER_BTN_TIMOUT_MS (50)
+#define DEBOUNCER_BTN_TIMOUT_MS (200)
+
+#define FALLO_MAX_TIEMPO_CARGA (-10)
+#define MAX_DESCARGA (10 * 1000 * 1000) // 10 segundos?
+#define FALLO_MAX_TIEMPO_DESCARGA (-1)
+#define MAX_CARGA (10 * 1000) // 10 segundos?
 
 typedef enum {
 	SIN_PRESIONAR,
 	PRESIONADO
 } EstadoBoton;
+
+typedef enum {
+	MENU_PARAMETRO,
+	MENU_MODO,
+	MENU_INFO,
+	MENU_R,
+	MENU_C,
+} Menu_t;
 
 EstadoBoton btn_menu = SIN_PRESIONAR;
 typedef enum {
@@ -71,8 +88,8 @@ typedef struct {
 } Configuracion_t;
 
 typedef enum {
-	MENU_INFO,
-	MENU_MODO,
+	MENU_INFO_FSM,
+	MENU_MODO_FSM,
 	MENU_PARAM,
 	C_DESCARGA,
 	C_CARGA,
@@ -91,35 +108,253 @@ typedef enum {
 	UART_COMMAND,
 } FSM_Signals;
 
-FSM_State FSM_General(FSM_State state, FSM_Signals signal);
+typedef enum {
+	RESISTOR_330,
+	RESISTOR_10K,
+	RESISTOR_1M,
+} OutputResistor_Type;
 
-Configuracion_t config = {
+FSM_State FSM_General(FSM_State state, FSM_Signals evento);
+
+// TODO: las descripciones de qué hace cada función iría acá en realidad
+void UART_mostrar_menu(Menu_t menu);
+Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart);
+uint32_t ADC_muestrear(uint32_t cantidad_muestras);
+void set_configuracion(Configurables_t configurable, Comando_t comando);
+void medir_c(ADC_HandleTypeDef *handle_adc);
+void medir_r(ADC_HandleTypeDef *handle_adc);
+void uart_leer_comando_it();
+void set_resistencia(OutputResistor_Type resistorType);
+
+void configurar_carga();
+void configurar_descarga();
+void configurar_resistencia330();
+
+const char* ObtenerUnidadEnString();
+
+extern ADC_HandleTypeDef hadc1;
+extern TIM_HandleTypeDef htim1;
+extern UART_HandleTypeDef huart1;
+
+volatile uint32_t ultima_muestra=0;
+
+volatile Configuracion_t config = {
 	.parametro = RESISTENCIA,
 	.modo = CONTINUO,
 	.comando = OPCION_1,
 	.unidad = OHMS,
 };
 
-#define MAX_LENGTH_BUFFER_MUESTRAS (32)
+char comando_buffer;
 
-typedef struct {
-	uint16_t buffer[MAX_LENGTH_BUFFER_MUESTRAS];
-	uint32_t index;
-} Buffer_t;
+volatile FSM_State estado_actual = MENU_INFO;
+volatile uint32_t flag_nuevo_comando = 0;
+volatile uint16_t r_medida = 0;
+volatile uint16_t c_medida = 0;
+volatile uint32_t btn_debouncer = 0;
 
-Buffer_t buffer_muestras = {
-		.buffer = 0,
-		.index = 0,
-};
+volatile uint32_t contador_timer_1ms = 0;
+volatile uint32_t contador_timer_100ms = 0;
+volatile int32_t contador_capacitor = 0;
 
-#define ESTADO_INICIAL (0)
-FSM_State estado_actual = {ESTADO_INICIAL};
-uint32_t contador_timer_1ms = 0;
-uint32_t contador_timer_10ms = 0;
-uint32_t contador_fallas = 0;
-uint32_t contador_carga_capacitor = 0;
+volatile uint32_t procesar_activo = 0;
+
+// TODO: la capacidad tiene que borrar la pantalla o mostrar
+// las muestras una tras otra??
+// TODO: manejar los ERRORES de MAX conteo del cap
+void UART_mostrar_menu(Menu_t menu){
+
+	/*
+	Toma como parametro el tipo Menu_t y lo imprime en pantalla a traves de la uart especificada
+	Existen 4 menus distitnos:
+		-menu_info: muestra informacion acerca de la configuracion (modo y parametro a medir)
+		-menu_modo: muestra el menu de seleccion de modo (unico y continuo)
+		-menu_parametro: muestra el menu de seleccion de parametro (resistencia y capacitancia)
+		-menu_medicion: muestra el menu con los datos de la ultima medicion
+	*/
+
+	if (menu != MENU_R) {
+		char clear[] = "\033[2J\033[H"; // Clear
+		HAL_UART_Transmit(&huart1, (uint8_t*)clear, sizeof(clear)-1, HAL_MAX_DELAY);
+	}
+
+	switch (menu){
+
+		case MENU_INFO:
+			// Esto dsp lo midifico para que muestre modo y parametro dinamicamente
+			char buffer_uart_info[360];
+//			HAL_UART_Transmit(&huart1, (uint8_t*)buffer_uart_info, strlen(buffer_uart_info), HAL_MAX_DELAY);
+
+			snprintf(buffer_uart_info, sizeof(buffer_uart_info),
+					"\r\n"
+					"====================================\r\n"
+					"             MENU INFO              \r\n"
+					"====================================\r\n"
+					"\r\n"
+					"Estado actual:\r\n"
+					"  • Modo      : %s\r\n"
+					"  • Parametro : %s\r\n"
+					"\r\n"
+					"------------------------------------\r\n"
+					"Seleccione una opcion:\r\n"
+					"\r\n"
+					"  [1] Cambiar modo\r\n"
+					"  [2] Cambiar parametro\r\n"
+					"\r\n"
+					"------------------------------------\r\n"
+					"> ",
+					config.modo == CONTINUO ? "CONTINUO" : "UNICO",
+					config.parametro == RESISTENCIA ? "RESISTENCIA" : "CAPACIDAD"
+			);
+
+			// enviar por UART
+			HAL_UART_Transmit(&huart1, (uint8_t*)buffer_uart_info, strlen(buffer_uart_info), HAL_MAX_DELAY);
+
+		break;
+
+		case MENU_MODO:
+
+			char buffer_uart_modo[] =
+			"====================================\r\n"
+			"           MENU MODO                \r\n"
+			"====================================\r\n"
+			"Seleccione el modo:\r\n"
+			"\r\n"
+			"  [1] Disparo unico\r\n"
+			"  [2] Disparo continuo\r\n"
+			"\r\n"
+			"------------------------------------\r\n"
+			"> ";
+			HAL_UART_Transmit(&huart1, (uint8_t*)buffer_uart_modo, strlen(buffer_uart_modo), HAL_MAX_DELAY);
+
+		break;
+
+		case MENU_PARAMETRO:
+
+			char buffer_uart_parametro[] =
+			"====================================\r\n"
+			"         MENU PARAMETRO             \r\n"
+			"====================================\r\n"
+			"Seleccione el parametro a medir:\r\n"
+			"\r\n"
+			"  [1] Resistencia\r\n"
+			"  [2] Capacitancia\r\n"
+			"\r\n"
+			"------------------------------------\r\n"
+			"> ";
+			HAL_UART_Transmit(&huart1, (uint8_t*)buffer_uart_parametro, strlen(buffer_uart_parametro), HAL_MAX_DELAY);
+
+		break;
+
+//		case menu_medicion:
+//
+//			//Defino el valor que se va a mostrar (resistencia o capacitancia)
+//
+//			char buffer_uart_medicion[200];
+//
+//			const char *parametro_string;
+//			const char *modo_string;
+//			const char *unidad;
+//			int valor;
+//
+//			if (config.modo == UNICO) {
+//			    modo_string = "DISPARO UNICO";
+//			} else {
+//			    modo_string = "DISPARO CONTINUO";
+//			}
+//
+//			if (config.parametro == RESISTENCIA) {
+//			    parametro_string = "RESISTENCIA";
+//			    valor = r_medida;
+//			    unidad = "Ω";
+//
+//			} else {
+//			    parametro_string = "CAPACITANCIA";
+//			    valor = c_medida;
+//			    unidad = "nF";
+//			}
+//
+//			// Armo el mensaje
+//			snprintf(buffer_uart_medicion, sizeof(buffer_uart_medicion),
+//			    "====================================\r\n"
+//			    "        MEDICION %s        \r\n"
+//			    "            %s        \r\n"
+//			    "====================================\r\n"
+//			    "\r\n"
+//			    "Valor: %d %s\r\n"
+//			    ,
+//			    parametro_string,
+//				modo_string,
+//			    valor,
+//				unidad
+//			);
+//
+//			// enviar por UART
+//			HAL_UART_Transmit(&huart1, (uint8_t*)buffer_uart_medicion, strlen(buffer_uart_medicion), HAL_MAX_DELAY);
+
+//		break;
+		case MENU_R:
+
+			char buffer_uart_medicion[200];
+
+			// Armo el mensaje
+			snprintf(buffer_uart_medicion,
+					sizeof(buffer_uart_medicion),
+					"Valor: %d %s\r\n",
+					r_medida,
+					ObtenerUnidadEnString()
+			);
+
+			// enviar por UART
+			HAL_UART_Transmit(&huart1, (uint8_t*)buffer_uart_medicion, strlen(buffer_uart_medicion), HAL_MAX_DELAY);
+
+			break;
+
+		case MENU_C:
+
+			char buffer_uart_medicion_capacidad[200];
+
+			if (c_medida == FALLO_MAX_TIEMPO_DESCARGA || c_medida == FALLO_MAX_TIEMPO_CARGA) {
+				snprintf(buffer_uart_medicion_capacidad, sizeof(buffer_uart_medicion_capacidad),
+						"====================================\r\n"
+						"        MEDICION CAPACIDAD        \r\n"
+						"            %s        \r\n"
+						"====================================\r\n"
+						"\r\n"
+						"FUERA DE RANGO \r\n"
+						,
+						config.modo == UNICO ? "DISPARO UNICO" : "DISPARO CONTINUO"
+				);
+				HAL_UART_Transmit(&huart1, (uint8_t*)buffer_uart_medicion_capacidad, strlen(buffer_uart_medicion_capacidad), HAL_MAX_DELAY);
+				break;
+			}
+
+			// Armo el mensaje
+			snprintf(buffer_uart_medicion_capacidad, sizeof(buffer_uart_medicion_capacidad),
+			    "====================================\r\n"
+			    "        MEDICION CAPACIDAD        \r\n"
+			    "            %s        \r\n"
+			    "====================================\r\n"
+			    "\r\n"
+			    "Valor: %d %s\r\n"
+			    ,
+				config.modo == UNICO ? "DISPARO UNICO" : "DISPARO CONTINUO",
+			    c_medida,
+				ObtenerUnidadEnString()
+			);
+
+			// enviar por UART
+			HAL_UART_Transmit(&huart1, (uint8_t*)buffer_uart_medicion_capacidad, strlen(buffer_uart_medicion_capacidad), HAL_MAX_DELAY);
+
+			break;
+	}
+}
 
 void Multimetro_activar(void) {
+
+	HAL_TIM_Base_Start_IT(&htim1);
+
+	HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
 
 	// Corroboro que el usuario tenga configurado el clock a 72MHz
 	if (HAL_RCC_GetSysClockFreq() != 72000000)
@@ -127,112 +362,107 @@ void Multimetro_activar(void) {
 	    Error_Handler();
 	}
 
-	// Se hacen los pines PA5, PA6 y PA7 OUTPUT
-	/*Configure GPIO pin : BTN_MENU_Pin */
-	GPIO_InitStruct.Pin = BTN_MENU_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-	GPIO_InitStruct.Pull = GPIO_PULLUP;
-	HAL_GPIO_Init(BTN_MENU_GPIO_Port, &GPIO_InitStruct);
+	// TODO: habría que hacer que se configuren
+	// todos los periféricos acá
 
-	/*Configure GPIO pin : GPIO330R_Pin */
-	GPIO_InitStruct.Pin = GPIO330R_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-	HAL_GPIO_Init(GPIO330R_GPIO_Port, &GPIO_InitStruct);
-
-	/*Configure GPIO pins : GPIO10K_Pin GPIO1M_Pin */
-	GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO1M_Pin;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-	// se activa Timer 1 para interrupción cada 1ms
-    __HAL_RCC_TIM1_CLK_ENABLE();
-
-    htim1.Instance = TIM1;
-    htim1.Init.Prescaler = 7200 - 1;      // 72MHz / 7200 = 10kHz
-    htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-    htim1.Init.Period = 10 - 1;           // 10 cuentas = 1ms
-    htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-    htim1.Init.RepetitionCounter = 0;
-    htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-
-    if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
-    {
-        Error_Handler();
-    }
-
-    HAL_NVIC_SetPriority(TIM1_UP_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(TIM1_UP_IRQn);
-
-
-	// activar interrupción botón
-    GPIO_InitTypeDef GPIO_InitStruct = {0};
-
-    __HAL_RCC_GPIOA_CLK_ENABLE();
-    __HAL_RCC_AFIO_CLK_ENABLE();
-
-    GPIO_InitStruct.Pin  = GPIO_PIN_0;
-    GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-
-    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-    HAL_NVIC_SetPriority(EXTI0_IRQn, 1, 0);
-    HAL_NVIC_EnableIRQ(EXTI0_IRQn);
-
-
-    // Se inicializa el USART1
-	/* PA9 -> TX */
-	GPIO_InitStruct.Pin   = GPIO_PIN_9;
-	GPIO_InitStruct.Mode  = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-	/* PA10 -> RX */
-	GPIO_InitStruct.Pin  = GPIO_PIN_10;
-	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-	GPIO_InitStruct.Pull = GPIO_NOPULL;
-	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-	huart1.Instance          = USART1;
-	huart1.Init.BaudRate     = 115200;
-	huart1.Init.WordLength   = UART_WORDLENGTH_8B;
-	huart1.Init.StopBits     = UART_STOPBITS_1;
-	huart1.Init.Parity       = UART_PARITY_NONE;
-	huart1.Init.Mode         = UART_MODE_TX_RX;
-	huart1.Init.HwFlowCtl    = UART_HWCONTROL_NONE;
-	huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-
-	HAL_UART_Init(&huart1);
-
-	HAL_NVIC_SetPriority(USART1_IRQn, 1, 0);
-	HAL_NVIC_EnableIRQ(USART1_IRQn);
-
-	/* Start first interrupt reception */
-	HAL_UART_Receive_IT(&huart1, &rx_byte, 1);
-
-	// TODO: configurar interrupción ADC
+//
+//	// Se hacen los pines PA5, PA6 y PA7 OUTPUT
+//	/*Configure GPIO pin : BTN_MENU_Pin */
+//	GPIO_InitStruct.Pin = BTN_MENU_Pin;
+//	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+//	GPIO_InitStruct.Pull = GPIO_PULLUP;
+//	HAL_GPIO_Init(BTN_MENU_GPIO_Port, &GPIO_InitStruct);
+//
+//	/*Configure GPIO pin : GPIO330R_Pin */
+//	GPIO_InitStruct.Pin = GPIO330R_Pin;
+//	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+//	GPIO_InitStruct.Pull = GPIO_NOPULL;
+//	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+//	HAL_GPIO_Init(GPIO330R_GPIO_Port, &GPIO_InitStruct);
+//
+//	/*Configure GPIO pins : GPIO10K_Pin GPIO1M_Pin */
+//	GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO1M_Pin;
+//	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+//	GPIO_InitStruct.Pull = GPIO_NOPULL;
+//	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+//
+//	// se activa Timer 1 para interrupción cada 1ms
+//    __HAL_RCC_TIM1_CLK_ENABLE();
+//
+//    htim1.Instance = TIM1;
+//    htim1.Init.Prescaler = 7200 - 1;      // 72MHz / 7200 = 10kHz
+//    htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+//    htim1.Init.Period = 10 - 1;           // 10 cuentas = 1ms
+//    htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+//    htim1.Init.RepetitionCounter = 0;
+//    htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+//
+//    if (HAL_TIM_Base_Init(&htim1) != HAL_OK)
+//    {
+//        Error_Handler();
+//    }
+//
+//    HAL_NVIC_SetPriority(TIM1_UP_IRQn, 0, 0);
+//    HAL_NVIC_EnableIRQ(TIM1_UP_IRQn);
+//
+//
+//	// activar interrupción botón
+//    GPIO_InitTypeDef GPIO_InitStruct = {0};
+//
+//    __HAL_RCC_GPIOA_CLK_ENABLE();
+//    __HAL_RCC_AFIO_CLK_ENABLE();
+//
+//    GPIO_InitStruct.Pin  = GPIO_PIN_0;
+//    GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
+//    GPIO_InitStruct.Pull = GPIO_PULLUP;
+//
+//    HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+//
+//    HAL_NVIC_SetPriority(EXTI0_IRQn, 1, 0);
+//    HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+//
+//
+//    // Se inicializa el USART1
+//	/* PA9 -> TX */
+//	GPIO_InitStruct.Pin   = GPIO_PIN_9;
+//	GPIO_InitStruct.Mode  = GPIO_MODE_AF_PP;
+//	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+//	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+//
+//	/* PA10 -> RX */
+//	GPIO_InitStruct.Pin  = GPIO_PIN_10;
+//	GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+//	GPIO_InitStruct.Pull = GPIO_NOPULL;
+//	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+//
+//	huart1.Instance          = USART1;
+//	huart1.Init.BaudRate     = 115200;
+//	huart1.Init.WordLength   = UART_WORDLENGTH_8B;
+//	huart1.Init.StopBits     = UART_STOPBITS_1;
+//	huart1.Init.Parity       = UART_PARITY_NONE;
+//	huart1.Init.Mode         = UART_MODE_TX_RX;
+//	huart1.Init.HwFlowCtl    = UART_HWCONTROL_NONE;
+//	huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+//
+//	HAL_UART_Init(&huart1);
+//
+//	HAL_NVIC_SetPriority(USART1_IRQn, 1, 0);
+//	HAL_NVIC_EnableIRQ(USART1_IRQn);
+//
+//	/* Start first interrupt reception */
+//	HAL_UART_Receive_IT(&huart1, &rx_byte, 1);
+//
+//	// TODO: configurar interrupción ADC
 
 }
 
-// Callback del timer 100us
-void HAL_TIM_EXTI_Callback(void) {
-	estado_actual = FSM_General(estado_actual, TICK_100US);
+// Callback del timer 100u
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
+	procesar_activo = 1;
 	contador_timer_1ms++;
-	if (contador_timer_1ms >= 10) {
-		contador_timer_1ms = 0;
-		estado_actual = FSM_General(estado_actual, TICK_1MS);
-	}
-	contador_timer_10ms++;
-	if (contador_timer_10ms >= 100) {
-		contador_timer_10ms = 0;
-		estado_actual = FSM_General(estado_actual, TICK_100MS);
-	}
+	contador_timer_100ms++;
 }
 
-uint32_t btn_debouncer = 0;
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
   if (GPIO_Pin == GPIO_PIN_0 && (HAL_GetTick() - btn_debouncer) >= DEBOUNCER_BTN_TIMOUT_MS){
@@ -241,185 +471,391 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
   }
 }
 
-/* HAL callback override */
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-    if (huart->Instance == USART1)
-    {
-    	// TODO
-        HAL_UART_Receive_IT(&huart1, &rx_byte, 1);
-    }
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	flag_nuevo_comando = 1;
 }
 
-// TODO
-uint32_t GetAverage() {
-	uint32_t acc;
-	for (int i = 0; i < MAX_LENGTH_BUFFER_MUESTRAS; i++) {
-		acc += buffer[i];
+FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
+	switch (state) {
+	case MENU_INFO_FSM:
+		if (evento == UART_COMMAND) {
+			//        UART_mostrar_menu(menu, handle_uart);
+			if (config.comando == OPCION_1) {
+				UART_mostrar_menu(MENU_MODO);
+				return MENU_MODO_FSM;
+			} else if (config.comando == OPCION_2) {
+				UART_mostrar_menu(MENU_PARAMETRO);
+				return MENU_PARAM;
+			}
+			return MENU_INFO_FSM;
+		} else if (evento == BTN_MENU) {
+			if (config.parametro == RESISTENCIA) {
+				set_resistencia(RESISTOR_330);
+				return R330;
+			} else if (config.parametro == CAPACITANCIA) {
+				configurar_descarga();
+				return C_DESCARGA;
+			}
+			return MENU_INFO_FSM;
+		}
+		break;
+
+	case MENU_MODO_FSM:
+		if (evento == UART_COMMAND) {
+			if (config.comando == OPCION_1) {
+				config.modo = UNICO;
+			} else if (config.comando == OPCION_2) {
+				config.modo = CONTINUO;
+			} else {
+				return MENU_MODO_FSM;
+			}
+			UART_mostrar_menu(MENU_INFO);
+			return MENU_INFO_FSM;
+		}
+		break;
+
+
+	case MENU_PARAM:
+		if (evento == UART_COMMAND) {
+			if (config.comando == OPCION_1) {
+				config.parametro = RESISTENCIA;
+			} else if (config.comando == OPCION_2) {
+				config.parametro = CAPACITANCIA;
+			}
+			UART_mostrar_menu(MENU_INFO);
+			return MENU_INFO_FSM;
+		}
+		break;
+
+	case C_DESCARGA:
+		if (evento == TICK_100US) {
+			if (ADC_muestrear(1) >= VCC_AL_2_PORCIENTO) {
+				contador_capacitor++;
+				if (contador_capacitor >= MAX_DESCARGA) {
+					c_medida = FALLO_MAX_TIEMPO_DESCARGA;
+					return C_MOSTRAR;
+				}
+				configurar_descarga();
+				return C_DESCARGA;
+			}
+			// si no ocurre lo anterior es porque la
+			// muestra < VCC_AL_2_PORCICENTO
+			configurar_carga();
+			return C_CARGA;
+
+		} else if (evento == BTN_MENU) {
+			contador_capacitor = 0;
+			UART_mostrar_menu(MENU_INFO);
+			return MENU_INFO_FSM;
+		}
+
+		configurar_descarga();
+		return C_DESCARGA;
+
+	case C_CARGA:
+		if (evento == TICK_1MS) {
+			if (ADC_muestrear(1) >= VCC_AL_63_PORCIENTO) {
+				config.unidad = NANO_FARADIOS;
+				c_medida = contador_capacitor * (1000 / VALOR_RESISTOR_1M_KOHMS);
+				UART_mostrar_menu(MENU_C);
+				HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_RESET);
+				return C_MOSTRAR;
+			} else {
+				contador_capacitor++;
+			}
+
+			if (contador_capacitor >= MAX_CARGA){
+				contador_capacitor = 0;
+				config.unidad = NANO_FARADIOS;
+				c_medida = FALLO_MAX_TIEMPO_CARGA;
+				UART_mostrar_menu(MENU_C);
+				return C_MOSTRAR;
+			}
+			return C_CARGA;
+
+		} else if (evento == BTN_MENU) {
+			contador_capacitor = 0;
+			UART_mostrar_menu(MENU_INFO);
+			return MENU_INFO_FSM;
+		}
+		break;
+
+	case C_MOSTRAR:
+		// TODO: las funciones que cambian a C_MOSTRAR deberían
+		// llamar alguna funcion que imprima en pantalla
+		if (evento == TICK_100MS && config.modo == CONTINUO) {
+			configurar_descarga();
+			return C_DESCARGA;
+		} else if (evento == BTN_MENU) {
+			UART_mostrar_menu(MENU_INFO);
+			return MENU_INFO_FSM;
+		}
+		break;
+
+	case R330:
+		if (evento == TICK_100US) {
+			ultima_muestra = ADC_muestrear(32);
+			if (ultima_muestra > VCC_AL_95_PORCIENTO) {
+				set_resistencia(RESISTOR_10K);
+				return R10K;
+			}
+			r_medida = (VALOR_RESISTOR_330_OHMS * ultima_muestra) / (VCC_MV - ultima_muestra);
+			config.unidad = OHMS;
+			UART_mostrar_menu(MENU_R);
+			return R_MOSTRAR;
+		} else if (evento == BTN_MENU) {
+			UART_mostrar_menu(MENU_INFO);
+			return MENU_INFO_FSM;
+		}
+		break;
+
+	case R10K:
+		if (evento == TICK_100US) {
+			ultima_muestra = ADC_muestrear(32);
+			if (ultima_muestra > VCC_AL_95_PORCIENTO) {
+				set_resistencia(RESISTOR_1M);
+				return R1M;
+			}
+			r_medida = (VALOR_RESISTOR_10K_OHMS * ultima_muestra) / (VCC_MV - ultima_muestra);
+			config.unidad = OHMS;
+			UART_mostrar_menu(MENU_R);
+			return R_MOSTRAR;
+		} else if (evento == BTN_MENU) {
+			UART_mostrar_menu(MENU_INFO);
+			return MENU_INFO_FSM;
+		}
+		break;
+
+	case R1M:
+		if (evento == TICK_100US) {
+			ultima_muestra = ADC_muestrear(32);
+			r_medida = ( (VALOR_RESISTOR_1M_OHMS * ultima_muestra) / (VCC_MV - ultima_muestra) ) / 1000;
+			config.unidad = KILO_OHMS;
+			UART_mostrar_menu(MENU_R);
+			return R_MOSTRAR;
+		} else if (evento == BTN_MENU) {
+			UART_mostrar_menu(MENU_INFO);
+			return MENU_INFO_FSM;
+		}
+		break;
+
+	case R_MOSTRAR:
+		if (evento == TICK_100MS && config.modo == CONTINUO) {
+			configurar_resistencia330();
+			return R330;
+		} else if (evento == BTN_MENU) {
+			UART_mostrar_menu(MENU_INFO);
+			return MENU_INFO_FSM;
+		}
+		return R_MOSTRAR;
 	}
-	return acc / MAX_LENGTH_BUFFER_MUESTRAS;
+	return state;
 }
 
-// TODO
-void CALLBACK_UART(void){
+void Multimetro_procesar() {
 
-//	if (index < )
-	buffer[index++] = muestra;
+	btn_debouncer++;
+	if (flag_nuevo_comando) { //Atajo el flag del interrupt de la uart.
+		switch (comando_buffer) {
+			case '1':
+				config.comando = OPCION_1;
+				break;
+			case '2':
+				config.comando = OPCION_2;
+				break;
+			default:
+				config.comando = INVALIDO;
+				break;
+		}
+		estado_actual = FSM_General(estado_actual, UART_COMMAND);
+		HAL_UART_Receive_IT(&huart1,(uint8_t*) &comando_buffer,1);
+		flag_nuevo_comando = 0;
+	}
 
-//typedef struct {
-//	uint16_t buffer[32];
-//	uint32_t index;
-//} Buffer_t;
-//
-//Buffer_t buffer_muestras = {
-//		.buffer = 0,
-//		.index = 0,
-//};
+	if (btn_menu == PRESIONADO){ //Atajo el flag del interrupt del boton
+		estado_actual = FSM_General(estado_actual, BTN_MENU);
+		btn_menu = SIN_PRESIONAR;
+	}
+
+	if (!procesar_activo) return;
+	procesar_activo=0;
+
+	estado_actual = FSM_General(estado_actual, TICK_100US);
+
+	if (contador_timer_1ms >= 10) {
+		contador_timer_1ms = 0;
+		estado_actual = FSM_General(estado_actual, TICK_1MS);
+	}
+	if (contador_timer_100ms >= 1000) {
+		contador_timer_100ms = 0;
+		estado_actual = FSM_General(estado_actual, TICK_100MS);
+	}
+
 }
 
-FSM_State FSM_General(FSM_State state, FSM_Signals signal) {
-  switch (state) {
-    case MENU_INFO:
-      if (signal == UART_COMMAND) {
-        UART_mostrar_menu(menu, handle_uart);
-        if (config.comando == OPCION_1) {
-          return MENU_MODO;
-        } else if (config.comando == OPCION_2) {
-          return MENU_PARAM;
-        }
-        return MENU_INFO;
-      } else if (signal == BTN_MENU) {
-        if (config.modo == RESISTENCIA) {
-          configurar_resistencia330(); // TODO
-          return R330;
-        } else if (config.modo == CAPACITANCIA) {
-          configurar_descarga(); // TODO 
-          return C_DESCARGA;
-        }
-        return MENU_INFO;
-      }
-      break;
+void configurar_carga() {
+	contador_capacitor = 0;
 
-    case MENU_MODO:
-      if (signal == UART_COMMAND) {
-        if (config.comando == OPCION_1) {
-          config.modo = UNICO;
-        } else if (config.comando == OPCION_2) {
-          config.modo = CONTINUO;
-        }
-        return MENU_INFO;
-      } else if (signal == TICK_1MS) {
-        return MENU_INFO;
-      } else if (signal == BTN_MENU) {
-        return MENU_INFO;
-      }
-      break;
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    case MENU_PARAM:
-      if (signal == UART_COMMAND) {
-        if (config.comando == OPCION_1) {
-          config.parametro = RESISTENCIA;
-        } else if (config.comando == OPCION_2) {
-          config.parametro = CAPACITANCIA;
-        }
-        return MENU_INFO;
-      }
-      break;
+	// Se setea GPIO1M como salida en bajo y las otras dos en alta impendacia
+	HAL_GPIO_WritePin(GPIO330R_GPIO_Port, GPIO330R_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIO10K_GPIO_Port, GPIO10K_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_RESET);
 
-    case C_DESCARGA:
-      if (signal == UART_COMMAND) {
-        return MENU_INFO;
-      } else if (signal == TICK_100US) {
-#define GET_LATEST_SAMPLE (buffer_muestras.buffer[buffer_muestras.index])
-        if (GET_LATEST_SAMPLE >= VCC_AL_2_PORCIENTO) {
-          contador_fallas++;
-#define MAX_CUENTAS_DESCARGA_CAPACITOR (10 * 1000 * 1000) // 10 segundos?
-          if (contador_fallas >= MAX_CUENTAS_DESCARGA_CAPACITOR) {
-            // valor_medicion = FALLO_NO_DESCARGO_EL_CAPACITOR
-            return C_MOSTRAR;
-          }
-        } else if (GET_LATEST_SAMPLE < VCC_AL_2_PORCIENTO) {
-          return C_CARGA;
-        }
-      } else if (signal == BTN_MENU) {
-        contador_fallas = 0;
-        return MENU_INFO;
-      }
-      break;
+	//1M como salida en bajo (no pull up ni pull down)
+	GPIO_InitStruct.Pin = GPIO1M_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIO1M_GPIO_Port, &GPIO_InitStruct);
 
-    case C_CARGA:
-      if (signal == UART_COMMAND) {
-        return MENU_INFO;
-      } else if (signal == TICK_1MS) {
-        if (GET_LATEST_SAMPLE >= VCC_AL_63_PORCIENTO) {
-          contador_carga_capacitor = 0; 
-          return C_MOSTAR;
-        } else {
-          contador_carga_capacitor++;
-        }
+	GPIO_InitStruct.Pin = GPIO330R_Pin|GPIO10K_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-#define MAX_CUENTAS_CARGA_CAPACITOR (10 * 1000) // 10 segundos?
-        if (contador_carga_capacitor >= MAX_CUENTAS_CARGA_CAPACITOR){
-          contador_carga_capacitor = 0; 
-          return C_MOSTRAR;
-        }
-      } else if (signal == BTN_MENU) {
-        contador_carga_capacitor = 0
-        return MENU_INFO;
-      }
-      break;
+	HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_SET);
 
-    case C_MOSTRAR:
-      // TODO: las funciones que cambian a C_MOSTRAR deberían
-      // llamar alguna funcion que imprima en pantalla
-      if (signal == TICK_100MS && config.modo == CONTINUO) {
-        configurar_descarga(); // TODO
-        return C_DESCARGA;
-      } else if (signal == BTN_MENU) {
-        return MENU_INFO;
-      }
-      break;
+//	c_medida = contador_de_muestras * (1000 / VALOR_RESISTOR_1M_KOHMS);
 
-    case R330:
-      if (signal == TICK_100US) {
-        if (GET_LATEST_SAMPLE > VCC_AL_95_PORCIENTO) {
-          return R10K;
-        }
-        return R_MOSTRAR;
-      } else if (signal == BTN_MENU) {
+//	HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_RESET);
+}
 
-        return MENU_INFO;
-      }
-      break;
+void configurar_descarga() {
+	contador_capacitor = 0;
+	GPIO_InitTypeDef GPIO_InitStruct = {0};
 
-    case R10K:
-      if (signal == TICK_100US) {
-        if (GET_LATEST_SAMPLE > VCC_AL_95_PORCIENTO) {
-          return R1M;
-        }
-        return R_MOSTRAR;
-      } else if (signal == BTN_MENU) {
+	// TODO: preguntar orden de WritePin
+	HAL_GPIO_WritePin(GPIO330R_GPIO_Port, GPIO330R_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIO10K_GPIO_Port, GPIO10K_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_RESET);
 
-        return MENU_INFO;
-      }
-      break;
+	GPIO_InitStruct.Pin = GPIO330R_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+	HAL_GPIO_Init(GPIO330R_GPIO_Port, &GPIO_InitStruct);
 
-    case R1M:
-      if (signal == TICK_100US) {
-        return C_MOSTRAR;
-      } else if (signal == BTN_MENU) {
-        return MENU_INFO;
-      }
-      break;
+	GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO1M_Pin;
+	GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+	GPIO_InitStruct.Pull = GPIO_NOPULL;
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}
 
-    case R_MOSTRAR:
-      if (signal == TICK_100US && config.modo == CONTINUO) {
-        return R330;
-      } else if (signal == BTN_MENU) {
-        return MENU_INFO;
-      }
-      break;
-  }
+void configurar_resistencia330() {
+	set_resistencia(RESISTOR_330);
+	// TODO: reiniciar timer
+	contador_capacitor = 0;
+}
 
-  return state;
+uint32_t ADC_muestrear(uint32_t cantidad_muestras) {
+
+	//Realiza una lectura de ADC_N_MUESTRAS muestras y devuelve el promedio
+	uint32_t acc = 0;
+
+	for (uint32_t i=0; i<cantidad_muestras; i++) {
+
+		HAL_ADC_Start(&hadc1);
+		HAL_ADC_PollForConversion(&hadc1, 1000);
+		acc += HAL_ADC_GetValue(&hadc1);
+
+	}
+
+	//Convierto a mV, calculo promedio y retorno
+	return (acc * (uint32_t)3300) / ((uint32_t)4095 * cantidad_muestras);
+}
+
+void set_resistencia(OutputResistor_Type resistorType){
+
+
+	/*
+	Toma como input el define del pin, y lo setea en alto
+	mientras que setea los otros dos pines en alta Z.
+	*/
+
+	  GPIO_InitTypeDef GPIO_InitStruct = {0}; //Esto habria que ver si hace falta llamarlo siempre, capaz
+	  	  	  	  	  	  	  	  	  	  	 	 //podemos evitarnos tambien inicializar gpio initstruct cada vez
+
+	  switch (resistorType){
+
+	  case RESISTOR_330:
+          //330r como salida en alto
+		  GPIO_InitStruct.Pin = GPIO330R_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  HAL_GPIO_Init(GPIO330R_GPIO_Port, &GPIO_InitStruct);
+		  HAL_GPIO_WritePin(GPIO330R_GPIO_Port, GPIO330R_Pin, GPIO_PIN_SET);
+
+		  GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO1M_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  // Hay que tener cuidado que justo GPIO10K y GPIO1M
+		  // son del puerto GPIOA, pero si no fuera así
+		  // hay que inicializarlos separados
+		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		  break;
+
+	  case RESISTOR_10K:
+		  // GPIO10K en alto
+		  GPIO_InitStruct.Pin = GPIO10K_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  HAL_GPIO_Init(GPIO10K_GPIO_Port, &GPIO_InitStruct);
+		  HAL_GPIO_WritePin(GPIO10K_GPIO_Port, GPIO10K_Pin, GPIO_PIN_SET); //High
+
+		  // Y las demas en Z
+		  GPIO_InitStruct.Pin = GPIO330R_Pin|GPIO1M_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  // Hay que tener cuidado que justo GPIO10K y GPIO1M
+		  // son del puerto GPIOA, pero si no fuera así
+		  // hay que inicializarlos separados
+		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		  break;
+
+	  case RESISTOR_1M:
+		  //GPIO1M en alto
+		  GPIO_InitStruct.Pin = GPIO1M_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  HAL_GPIO_Init(GPIO1M_GPIO_Port, &GPIO_InitStruct);
+		  HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_SET); //High
+
+		  // Y las demas en Z
+		  GPIO_InitStruct.Pin = GPIO10K_Pin|GPIO330R_Pin;
+		  GPIO_InitStruct.Mode = GPIO_MODE_INPUT; // Z
+		  GPIO_InitStruct.Pull = GPIO_NOPULL;
+		  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+		  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+		  break;
+
+	  default:
+		  // TODO habría que tener un fallback para el error
+		  break;
+
+	  }
+}
+
+const char* ObtenerUnidadEnString() {
+	switch (config.unidad) {
+	case OHMS:
+		return "Ω";
+	case KILO_OHMS:
+		return "KΩ";
+	case MEGA_OHMS:
+		return "MΩ";
+	case MICRO_FARADIOS:
+		return "uF";
+	case NANO_FARADIOS:
+		return "nF";
+	case PICO_FARADIOS:
+		return "pF";
+	}
+	return "UNIDAD INVALIDA";
 }
