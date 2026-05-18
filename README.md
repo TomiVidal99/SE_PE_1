@@ -2,9 +2,10 @@
 
 ## TODO
 
-- [ ] Arreglar medir capacidad, fuera de rango.
+- [ ] fuera de rango (capacidad y resistencia).
+- [ ] Agregar .gitignore de la catedra
 
 ## Mejoras / posibles features
 
 - [ ] Agregar medir tensión.
-- [ ] Agregar auto rango de capacidad?
+- [ ] Agregar fondo de escala para capacidad (un modo de auto escala).
