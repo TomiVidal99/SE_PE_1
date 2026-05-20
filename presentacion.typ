@@ -30,10 +30,32 @@
   El problema
 ]
 
+#slide(title: "El problema", outlined: true)[
+El proyecto corresponde a un medidor de componentes R-C con autorango. 
+Es decir, un sistema que sea capaz de medir valor de resistencia o capacidad de un determinado elemento (DUT, device under test) y enviar dicha información por protocolo UART para finalmente mostrarlo (en nuestro caso) en la pantalla de una PC, todo sin necesidad de ajustar manualmente el alcance de medición. \
+
+El sistema es configurable a dos modos de disparo:\
+- Continuo: Realiza una medición cada 100ms y actualiza constantemente la información en pantalla.\
+- Único: Realiza solo una medición y la muestra en pantalla.\
+
+Y por otro lado, es también configurable el parámetro a medir:\
+
+- Resistencia.\
+- Capacidad.\
+
+]
+
+#slide(title: "El problema", outlined: true)[
+  Dichas configuraciones se llevan a cabo desde el menú de inicio que se muestra y se maneja mediante comandos por UART desde la PC.
+  Una vez realizada la configuración, el inicio de medición se activa mediante la pulsación del único boton.
+  Para alternar en pantalla entre el menú de configuración y el menú que muestra el valor medido, se puede presionar el mismo botón.
+]
+
 // A simple slide
 #slide[
-  // - Medir #stress("capacidad")
-  // - Medir #stress("resistencia")
+  - Medir #stress("Capacidad") a partir
+  - Medir #stress("Resistencia")
+  - Medir #stress("Interfaz")
   // - Diferentes #stress("modos de operación")
   // - Sample link: #link("typst.app").
     // - Link styling using `link-style`: `"color"`, `"underline"`, `"both"`
@@ -43,9 +65,9 @@
 
   // #framed(title: "Frame with title")[This text has been written using `#framed(title:"Frame with title")[text]`.]
 
-  #framed(title: "Medir capacidad")[Constante de tiempo]
-  #framed(title: "Medir resistencia")[Compara con resistencias]
-  #framed(title: "Interfaz de usuario")[Botones y UART]
+  // #framed(title: "Medir capacidad")[Constante de tiempo]
+  // #framed(title: "Medir resistencia")[Compara con resistencias]
+  // #framed(title: "Interfaz de usuario")[Botones y UART]
 ]
 
 // Focus slide
@@ -60,63 +82,39 @@
   #image("esquematico.svg", height: 14cm)
 ]
 
-// Blank slide
-#blank-slide[
-  // - This is a `#blank-slide`.
-  //
-  // - Available #stress[themes]#footnote[Use them as *color* functions! e.g., `#reddy("your text")`]:
-  //
-  // #framed(back-color: white)[
-  //   #bluey("bluey"), #reddy("reddy"), #greeny("greeny"), #yelly("yelly"), #purply("purply"), #dusky("dusky"), darky.
-  // ]
-  //
-  // ```typst
-  // #show: typslides.with(
-  //   ratio: "16-9",
-  //   theme: "bluey",
-  //   ...
-  // )
-  // ```
-  //
-  // - Or just use *your own theme color*:
-  //   - `theme: rgb("30500B")`
+#slide(title: "Solución hardware", outlined: true)[
+La tarea completa se lleva a cabo con los siguientes materiales:
+
+- Microcontrolador STM32F103C8T6
+- 1 botón normalmente abierto
+- 3 Resistencias de:
+	- 330ohm
+	- 10kohm
+	- 1Mohm
+- Terminal para colocar el DUT
 ]
 
-// Slide with title
-#slide(title: "Outlined slide", outlined: true)[
-  - Check out the *progress bar* at the bottom of the slide.
-
-    #h(1cm) `show-progress: true`
-
-  - Outline slides with `outlined: true`.
-
-  #grayed([This is a `#grayed` text. Useful for equations.])
-  #grayed($ P_t = alpha - 1 / (sqrt(x) + f(y)) $)
-
-
+#focus-slide[
+  // This is an auto-resized _focus slide_.
+  Solución  \
+  Software
 ]
 
-// Columns
-#slide(title: "Columns")[
-
-  #cols(columns: (2fr, 1fr, 2fr), gutter: 2em)[
-    #grayed[Columns can be included using `#cols[...][...]`]
-  ][
-    #grayed[And this is]
-  ][
-    #grayed[an example.]
-  ]
-
-  - Custom spacing: `#cols(columns: (2fr, 1fr, 2fr), gutter: 2em)[...]`
-
-  - Sample references: @typst, @typslides.
-    - Add a #stress[bibliography slide]...
-
-    1. `#let bib = bibliography("you_bibliography_file.bib")`
-    2. `#bibliography-slide(bib)`
+#slide(title: "Solución software", outlined: true)[
+  #set align(center)
+  // #image("DIAGRAMAS/FSM.png", height: 14cm)
 ]
 
-// Bibliography
+#slide(title: "Solución software", outlined: true)[
+  Para los distintos tipos de medición se necesita conocer la tensión que cae en el DUT. Se conecta para ello el ADC1 en sus terminales (como muestra el esquemático).\
+  El método de muestreo elegido es mediante el cálculo de un promedio entre N muestras a la mayor frecuencia permitida: esto significa que apenas el ADC termina una conversión, se inicia la siguiente.\
+  El valor default para N es 32 pero es modificable por código (no por comando).\
+  De acá en adelante, siempre que se mencione la tensión medida $V_"med"$ , nos referimos a la tensión medida promedio de las N muestras.\
+]
+
+#slide(title: "Solución", outlined: true)[
+]
+
 #let bib = bibliography("bibliography.bib")
 #bibliography-slide(bib)
 
