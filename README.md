@@ -2,10 +2,11 @@
 
 ## TODO
 
-- [ ] fuera de rango (capacidad y resistencia).
 - [ ] Agregar .gitignore de la catedra
 
 ## Mejoras / posibles features
 
+- [ ] Inicializar periféricos baremetal.
+- [ ] Botones de acceso rapido "r", "c", "u" y "p".
 - [ ] Agregar medir tensión.
 - [ ] Agregar fondo de escala para capacidad (un modo de auto escala).

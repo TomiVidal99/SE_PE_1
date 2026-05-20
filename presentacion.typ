@@ -102,18 +102,24 @@ La tarea completa se lleva a cabo con los siguientes materiales:
 
 #slide(title: "Solución software", outlined: true)[
   #set align(center)
-  // #image("DIAGRAMAS/FSM.png", height: 14cm)
+  #image("DIAGRAMAS/FSM.svg", height: 14cm)
 ]
 
 #slide(title: "Solución software", outlined: true)[
   - Se hizo una #stress("Máquina de estados finitos (FSM)") para resolver el problema:
   - Las señales de la #stress("FSM") son:
-    - *TICK100US* (timer de 100us)
-    - *TICK1MS* (timer de 1ms)
-    - *TICK100MS* (timer de 100MS)
-      - Estas 
-    - *COMANDO* (Cuando el usuario ingresa text por _UART_)
-    - *BTN_MENU* (Cuando el usuario presiona el botón)
+    - *TICK100US*: timer de 100us (generado por *TIM1*)
+    - *TICK1MS*: timer de 1ms (generado por contador a partir de *TIM1*)
+    - *TICK100MS*: timer de 100ms (generado por contador a partir de *TIM1*)
+    - *COMANDO*: Cuando el usuario ingresa un caracter por _UART_ (*USART1 modo IT*)
+    - *BTN_MENU*: Cuando el usuario presiona el botón (*BOTÓN CON EXTI*)
+]
+
+#slide(title: "Solución software", outlined: true)[
+  Funcionamiento general de la #stress("FSM"):
+  - Los estados: *R330_FSM*, *R10K_FSM*, *R1M_FSM* y *R_MOSTRAR_FSM*, se encargan de resolver la parte de medición de #stress("resistencia").
+  - Los estados: *C_DESCARGAR_FSM*, *C_CARGA_FSM* y *C_MOSTRAR_FSM*, se encargan de la parte de #stress("capacidad").
+  - Los estados: *MENU_INFO_FSM*, *MENU_MODO_FSM* y *MENU_PARAM_FSM*, se encargan de la parte del #stress("menu UART").
 ]
 
 #slide(title: "Solución software", outlined: true)[
