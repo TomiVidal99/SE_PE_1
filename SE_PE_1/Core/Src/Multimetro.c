@@ -538,7 +538,7 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 
 			if (!ok) return MENU_MODO_FSM;
 
-			UART_mostrar_menu(MENU_INFO);
+			UART_mostrar_menu(MENU_INFO_FSM);
 			return MENU_INFO_FSM;
 
 		}
