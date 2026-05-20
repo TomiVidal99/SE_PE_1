@@ -13,6 +13,9 @@
 #include "stdio.h"
 #include "string.h"
 
+//Macros
+#define CALCULAR_CAPACIDAD(cuentas) ((cuentas * 1000) / VALOR_RESISTOR_1M_KOHMS)
+
 #define DEFAULT_MODO UNICO
 #define DEFAULT_PARAMETRO RESISTENCIA
 #define DEFUALT_COMANDO OPCION_1
@@ -29,11 +32,12 @@
 
 #define DEBOUNCER_BTN_TIMEOUT_MS (200)
 
-#define FALLO_MAX_TIEMPO_CARGA (-10)
-#define MAX_DESCARGA (10 * 1000 * 1000) // 10 segundos?
-#define FALLO_MAX_TIEMPO_DESCARGA (-1)
-#define MAX_CARGA (10 * 1000) // 10 segundos?
-#define R_FUERA_DE_ESCALA -2
+#define MAX_CUENTAS_DESCARGA (10 * 1000 * 1000) // 10 segundos?
+#define MAX_CUENTAS_CARGA (10 * 1000) // 10 segundos?
+
+#define FALLO_MAX_TIEMPO_CARGA (-1)
+#define FALLO_MAX_TIEMPO_DESCARGA (-2)
+#define FALLO_R_FUERA_DE_ESCALA (-3)
 
 typedef enum {
 	SIN_PRESIONAR,
@@ -275,7 +279,7 @@ void UART_mostrar_menu(Menu_t menu){
 			}
 
 			// Verifico valor fuera de escala
-			if (r_medida == R_FUERA_DE_ESCALA){
+			if (r_medida == FALLO_R_FUERA_DE_ESCALA){
 				snprintf(buffer_uart_medicion_resistencia, sizeof(buffer_uart_medicion_resistencia),
 							"Valor: FUERA DE ESCALA\r\n"
 				);
@@ -559,13 +563,15 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 
 		if (evento == TICK_100US) {
 
-			    if (ADC_muestrear(1) >= VCC_AL_2_PORCIENTO) {
+				int i = ADC_muestrear(2);
+			    if (i >= VCC_AL_2_PORCIENTO) {
 
 			        contador_capacitor++;
 
-			        if (contador_capacitor >= MAX_DESCARGA) {
+			        if (contador_capacitor >= MAX_CUENTAS_DESCARGA) {
 			            c_medida = FALLO_MAX_TIEMPO_DESCARGA;
 			            UART_mostrar_menu(MENU_C);
+			            contador_timer_100ms = 0;
 			            return C_MOSTRAR_FSM;
 			        }
 
@@ -590,18 +596,27 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 	case C_CARGA_FSM:
 		if (evento == TICK_1MS) {
 
-			if ((ADC_muestrear(1) >= VCC_AL_63_PORCIENTO) && contador_capacitor < MAX_CARGA) {
+			contador_capacitor++;
+
+			if ((ADC_muestrear(1) >= VCC_AL_63_PORCIENTO) && contador_capacitor < MAX_CUENTAS_CARGA) {
+
 				config.unidad = NANO_FARADIOS;
-				c_medida = (contador_capacitor * 1000) / VALOR_RESISTOR_1M_KOHMS;
+//				c_medida = CALCULAR_CAPACIDAD(contador_capacitor);
+				c_medida = contador_capacitor;
 				UART_mostrar_menu(MENU_C);
 				HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_RESET);
+			    contador_timer_100ms = 0;
 				return C_MOSTRAR_FSM;
-			} else if(++contador_capacitor <= MAX_CARGA){
+
+			} else if(contador_capacitor <= MAX_CUENTAS_CARGA){
 				return C_CARGA_FSM;
+
 			} else {
 				contador_capacitor = 0;
 				c_medida = FALLO_MAX_TIEMPO_CARGA;
+
 				UART_mostrar_menu(MENU_C);
+				contador_timer_100ms = 0;
 				return C_MOSTRAR_FSM;
 
 			}
@@ -616,8 +631,7 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 		break;
 
 	case C_MOSTRAR_FSM:
-		// TODO: las funciones que cambian a C_MOSTRAR deberían
-		// llamar alguna funcion que imprima en pantalla
+
 		if (evento == TICK_100MS && config.modo == CONTINUO) {
 			configurar_descarga();
 			return C_DESCARGA_FSM;
@@ -634,10 +648,13 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 				set_resistencia(RESISTOR_10K);
 				return R10K_FSM;
 			}
+
 			r_medida = (VALOR_RESISTOR_330_OHMS * ultima_muestra) / (VCC_MV - ultima_muestra);
 			config.unidad = OHMS;
 			UART_mostrar_menu(MENU_R);
+			contador_timer_100ms = 0;
 			return R_MOSTRAR_FSM;
+
 		} else if (evento == BTN_MENU) {
 			UART_mostrar_menu(MENU_INFO);
 			return MENU_INFO_FSM;
@@ -651,10 +668,14 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 				set_resistencia(RESISTOR_1M);
 				return R1M_FSM;
 			}
+
 			r_medida = (VALOR_RESISTOR_10K_OHMS * ultima_muestra) / (VCC_MV - ultima_muestra);
 			config.unidad = OHMS;
 			UART_mostrar_menu(MENU_R);
+
+			contador_timer_100ms = 0;
 			return R_MOSTRAR_FSM;
+
 		} else if (evento == BTN_MENU) {
 			UART_mostrar_menu(MENU_INFO);
 			return MENU_INFO_FSM;
@@ -664,14 +685,16 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 	case R1M_FSM:
 		if (evento == TICK_100US) {
 			ultima_muestra = ADC_muestrear(32);
-			if (ultima_muestra > VCC_AL_95_PORCIENTO) {
+			if (ultima_muestra < VCC_AL_95_PORCIENTO) {
 				r_medida = ( (VALOR_RESISTOR_1M_OHMS * ultima_muestra) / (VCC_MV - ultima_muestra) ) / 1000;
 				config.unidad = KILO_OHMS;
 			} else {
-				r_medida = R_FUERA_DE_ESCALA;
+				r_medida = FALLO_R_FUERA_DE_ESCALA;
 			}
 
 			UART_mostrar_menu(MENU_R);
+
+			contador_timer_100ms = 0;
 			return R_MOSTRAR_FSM;
 
 		} else if (evento == BTN_MENU) {
@@ -682,7 +705,7 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 
 	case R_MOSTRAR_FSM:
 		if (evento == TICK_100MS && config.modo == CONTINUO) {
-			configurar_resistencia330();
+			set_resistencia(RESISTOR_330);
 			return R330_FSM;
 		} else if (evento == BTN_MENU) {
 			UART_mostrar_menu(MENU_INFO);
@@ -757,6 +780,10 @@ void configurar_carga() {
 	GPIO_InitStruct.Pull = GPIO_NOPULL;
 	HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
+	//Reinicio timer
+	__HAL_TIM_SET_COUNTER(&htim1, 0);
+	HAL_TIM_Base_Start_IT(&htim1);
+	contador_timer_1ms = 0;
 	// 1M en alto
 	HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_SET);
 
@@ -788,8 +815,6 @@ void configurar_descarga() {
 
 void configurar_resistencia330() {
 	set_resistencia(RESISTOR_330);
-	// TODO: reiniciar timer
-	contador_capacitor = 0;
 }
 
 uint32_t ADC_muestrear(uint32_t cantidad_muestras) {

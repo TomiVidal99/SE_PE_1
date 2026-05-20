@@ -85,6 +85,7 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 	Multimetro_procesar();
+
   }
   /* USER CODE END 3 */
 }
