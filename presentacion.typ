@@ -106,6 +106,17 @@ La tarea completa se lleva a cabo con los siguientes materiales:
 ]
 
 #slide(title: "Solución software", outlined: true)[
+  - Se hizo una #stress("Máquina de estados finitos (FSM)") para resolver el problema:
+  - Las señales de la #stress("FSM") son:
+    - *TICK100US* (timer de 100us)
+    - *TICK1MS* (timer de 1ms)
+    - *TICK100MS* (timer de 100MS)
+      - Estas 
+    - *COMANDO* (Cuando el usuario ingresa text por _UART_)
+    - *BTN_MENU* (Cuando el usuario presiona el botón)
+]
+
+#slide(title: "Solución software", outlined: true)[
   Para los distintos tipos de medición se necesita conocer la tensión que cae en el DUT. Se conecta para ello el ADC1 en sus terminales (como muestra el esquemático).\
   El método de muestreo elegido es mediante el cálculo de un promedio entre N muestras a la mayor frecuencia permitida: esto significa que apenas el ADC termina una conversión, se inicia la siguiente.\
   El valor default para N es 32 pero es modificable por código (no por comando).\
