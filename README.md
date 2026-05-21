@@ -3,6 +3,7 @@
 ## TODO
 
 - [ ] Agregar .gitignore de la catedra
+- [ ] Agregar al final de la presentación posibles mejoras:
 
 ## Mejoras / posibles features
 
