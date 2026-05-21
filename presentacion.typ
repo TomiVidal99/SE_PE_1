@@ -165,8 +165,8 @@ La elección de la resistencia de referencia comienza en 330ohm. Si el valor de 
  #set text(size: 20pt)
 
  _Multimetro.c_ contiene 2 funciones principales:
- - Multimetro_activar() \
- - Multimetro_procesar() \
+ - *Multimetro_activar()* \
+ - *Multimetro_procesar()* \
 
 ]
 
@@ -191,20 +191,51 @@ La elección de la resistencia de referencia comienza en 330ohm. Si el valor de 
 ]
 
 #slide(title: "Solución software", outlined: true)[
-Previo a la medición, se debe realizar un *proceso de descarga* para asegurar el estado incial del capacitor. Esto se logra Conectando el DUT directamente a 0V a través de la resisntencia 1Mohm. *El dispositivo está listo para ser medido una vez que se obtiene con el ADC una tensión menor al 2% de Vcc (0.065V).*
+#set text(size: 30pt)
+#stress("Descarga, carga y medida del capacitor")
 
-Luego se procede a la carga, que se basa en la medición de la constante de tiempo $#math.tau$ de un circuito R-C, donde R es una resistencia R_ref conocida fija, de 1Mohm.
+#set text(size: 20pt)
+Previo a la medición, se debe realizar un *proceso de descarga* para asegurar el estado incial del capacitor. Esto se logra Conectando el *DUT* directamente a 0V a través de la resisntencia 1M$#math.Omega$. _El dispositivo está listo para ser medido una vez que se obtiene con el ADC una tensión menor al 2% de Vcc (0.065V)._
 
- Encendiendo el GPIO correspondiente a R_ref = 1M y el resto en alta impedancia, se forma entonces el circuito y comienza la carga del DUT.
+Luego se procede a la carga, que se basa en la medición de la constante de tiempo $#math.tau$ de un circuito R-C, donde R es una resistencia $R_"ref"$ conocida fija, de 1M$#math.Omega$.
 
+ Encendiendo el GPIO correspondiente a $R_"ref"$ = 1M$#math.Omega$ y el resto en alta impedancia, se forma entonces el circuito y comienza la carga del *DUT*.
+
+#set align(center)
+#set text(size: 30pt)
 $C = #math.tau/R_"ref"$
 
-Para obtener el valor de tau, se cuentan muestras cada 1ms repetidamente hasta medir con el ADC una tensión igual al 63% del valor final de carga (0.63Vcc = 2.06V) .
-El valor de capacidad en nano faradios será simplemente la cantidad de muestras, puesto que se asume que la R_ref es de exactamente 1M y también que el intervalo de muestreo es de precisamente 1ms.
+#set text(size: 20pt)
+#set align(left)
 
-Existe un timeout para el caso en que nunca se alcance el valor de carga anterior.
+Para obtener el valor de *$#math.tau$*, se cuentan muestras cada 1ms repetidamente hasta medir con el ADC una tensión igual al 63% del valor final de carga (0.63Vcc = 2.06V) .
+El valor de capacidad en nano faradios será simplemente la cantidad de muestras, puesto que se asume que la $R_"ref"$ es de exactamente 1M$#math.Omega$ y también que el intervalo de muestreo es de precisamente 1ms.
+
+_Existe un timeout para el caso en que nunca se alcance el valor de carga anterior._  (*fuera de escala*)
+]
+
+#slide(title: "Solución software", outlined: true)[
+
+#set text(size: 30pt)
+#stress("Menúes de configuración")
+#set text(size: 20pt)
+
+Partiendo desde el menú info, que indica la configuración actual (modo y parámetro), *es posible moverse entre los distintos submenús de configuración solamente con comandos por UART que se indican en pantalla.*
+Luego de la configuración de modo o de parámetro, siempre se vuelve al menú inicial (menú info). 
+
+]
+
+#slide(title: "Solución software", outlined: true)[
+
+#set text(size: 30pt)
+#stress("Proceso de medición y menú medición")
+#set text(size: 20pt)
+
+Cuando se llega al estado medir por medio de el botón, se procesa una primer medición. En caso de que el modo sea único, se procede a mostrar el menú medición con el valor obtenido.
+En caso de que el modo sea continuo, se comienza un bucle infinito medir-mostrar cada 100ms, hasta que se presione el botón una vez más para salir y volver al menú info.
+
 ]
 
 #let bib = bibliography("bibliography.bib")
-#bibliography-slide(bib)
+// #bibliography-slide(bib)
 
