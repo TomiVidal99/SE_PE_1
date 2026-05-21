@@ -93,16 +93,16 @@ typedef struct {
 } Configuracion_t;
 
 typedef enum {
-	MENU_INFO_FSM,
-	MENU_MODO_FSM,
-	MENU_PARAM_FSM,
-	C_CARGA_FSM,
-	C_DESCARGA_FSM,
-	C_MOSTRAR_FSM,
-	R_MOSTRAR_FSM,
-	R330_FSM,
-	R10K_FSM,
-	R1M_FSM,
+	FSM_MENU_INFO,
+	FSM_MENU_MODO,
+	FSM_MENU_PARAM,
+	FSM_C_CARGA,
+	FSM_C_DESCARGA,
+	FSM_MOSTRAR_C,
+	FSM_MOSTRAR_R,
+	FSM_R330,
+	FSM_R10K,
+	FSM_R1M,
 } FSM_State;
 
 typedef enum {
@@ -155,7 +155,7 @@ volatile Configuracion_t config = {
 
 char comando_buffer;
 
-volatile FSM_State estado_actual = MENU_INFO_FSM;
+volatile FSM_State estado_actual = FSM_MENU_INFO;
 volatile uint32_t flag_nuevo_comando = 0;
 volatile int32_t r_medida = 0;
 volatile int32_t c_medida = 0;
@@ -476,19 +476,29 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
 int procesar_comando(){
 
-		if (estado_actual == MENU_MODO_FSM){
+		if (estado_actual == FSM_MENU_MODO){
 
-			if (config.comando == OPCION_1) config.modo = UNICO;
-			else if (config.comando == OPCION_2) config.modo = CONTINUO;
-			return 1;
+			if (config.comando == OPCION_1) {
+				config.modo = UNICO;
+				return 1;
+			}
+			else if (config.comando == OPCION_2) {
+				config.modo = CONTINUO;
+				return 1;
+			}
 
 		}
 
-		if (estado_actual == MENU_PARAM_FSM){
+		if (estado_actual == FSM_MENU_PARAM){
 
-			if (config.comando == OPCION_1) config.parametro = RESISTENCIA;
-			else if (config.comando == OPCION_2) config.parametro = CAPACITANCIA;
-			return 1;
+			if (config.comando == OPCION_1) {
+				config.parametro = RESISTENCIA;
+				return 1;
+			}
+			else if (config.comando == OPCION_2){
+				config.parametro = CAPACITANCIA;
+				return 1;
+			}
 
 		}
 
@@ -498,18 +508,18 @@ int procesar_comando(){
 
 FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 	switch (state) {
-	case MENU_INFO_FSM:
+	case FSM_MENU_INFO:
 
 		if (evento == UART_COMMAND) {
 
 			if (config.comando == OPCION_1) {
 				UART_mostrar_menu(MENU_MODO);
-				return MENU_MODO_FSM;
+				return FSM_MENU_MODO;
 			} else if (config.comando == OPCION_2) {
 				UART_mostrar_menu(MENU_PARAMETRO);
-				return MENU_PARAM_FSM;
+				return FSM_MENU_PARAM;
 			}
-			return MENU_INFO_FSM;
+			return FSM_MENU_INFO;
 
 		}
 
@@ -518,48 +528,49 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 
 			if (config.parametro == RESISTENCIA) {
 				set_resistencia(RESISTOR_330);
-				return R330_FSM;
+				HAL_ADCEx_Calibration_Start(&hadc1);
+				return FSM_R330;
 			}
 
 			if (config.parametro == CAPACITANCIA) {
 				configurar_descarga();
-				return C_DESCARGA_FSM;
+				return FSM_C_DESCARGA;
 			}
-			return MENU_INFO_FSM;
+			return FSM_MENU_INFO;
 		}
 
 		break;
 
-	case MENU_MODO_FSM:
+	case FSM_MENU_MODO:
 
 		if (evento == UART_COMMAND) {
 
 			int ok = procesar_comando();
 
-			if (!ok) return MENU_MODO_FSM;
-
-			UART_mostrar_menu(MENU_INFO_FSM);
-			return MENU_INFO_FSM;
-
-		}
-
-		break;
-
-	case MENU_PARAM_FSM:
-
-		if (evento == UART_COMMAND) {
-
-			int ok = procesar_comando();
-
-			if (!ok) return MENU_PARAM_FSM;
+			if (!ok) return FSM_MENU_MODO;
 
 			UART_mostrar_menu(MENU_INFO);
-			return MENU_INFO_FSM;
+			return FSM_MENU_INFO;
+
 		}
 
 		break;
 
-	case C_DESCARGA_FSM:
+	case FSM_MENU_PARAM:
+
+		if (evento == UART_COMMAND) {
+
+			int ok = procesar_comando();
+
+			if (!ok) return FSM_MENU_PARAM;
+
+			UART_mostrar_menu(MENU_INFO);
+			return FSM_MENU_INFO;
+		}
+
+		break;
+
+	case FSM_C_DESCARGA:
 
 		if (evento == TICK_100US) {
 
@@ -572,28 +583,28 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 			            c_medida = FALLO_MAX_TIEMPO_DESCARGA;
 			            UART_mostrar_menu(MENU_C);
 			            contador_timer_100ms = 0;
-			            return C_MOSTRAR_FSM;
+			            return FSM_MOSTRAR_C;
 			        }
 
-			        return C_DESCARGA_FSM;
+			        return FSM_C_DESCARGA;
 			    }
 
 			    // ya descargo
 			    configurar_carga();
-			    return C_CARGA_FSM;
+			    return FSM_C_CARGA;
 
 		}
 
 		if (evento == BTN_MENU) {
 			contador_capacitor = 0;
 			UART_mostrar_menu(MENU_INFO);
-			return MENU_INFO_FSM;
+			return FSM_MENU_INFO;
 		}
 
 		configurar_descarga();
-		return C_DESCARGA_FSM;
+		return FSM_C_DESCARGA;
 
-	case C_CARGA_FSM:
+	case FSM_C_CARGA:
 		if (evento == TICK_1MS) {
 
 			contador_capacitor++;
@@ -606,10 +617,10 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 				UART_mostrar_menu(MENU_C);
 				HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_RESET);
 			    contador_timer_100ms = 0;
-				return C_MOSTRAR_FSM;
+				return FSM_MOSTRAR_C;
 
 			} else if(contador_capacitor <= MAX_CUENTAS_CARGA){
-				return C_CARGA_FSM;
+				return FSM_C_CARGA;
 
 			} else {
 				contador_capacitor = 0;
@@ -617,7 +628,7 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 
 				UART_mostrar_menu(MENU_C);
 				contador_timer_100ms = 0;
-				return C_MOSTRAR_FSM;
+				return FSM_MOSTRAR_C;
 
 			}
 		}
@@ -625,48 +636,48 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 		 if (evento == BTN_MENU) {
 			contador_capacitor = 0;
 			UART_mostrar_menu(MENU_INFO);
-			return MENU_INFO_FSM;
+			return FSM_MENU_INFO;
 		}
 
 		break;
 
-	case C_MOSTRAR_FSM:
+	case FSM_MOSTRAR_C:
 
 		if (evento == TICK_100MS && config.modo == CONTINUO) {
 			configurar_descarga();
-			return C_DESCARGA_FSM;
+			return FSM_C_DESCARGA;
 		} else if (evento == BTN_MENU) {
 			UART_mostrar_menu(MENU_INFO);
-			return MENU_INFO_FSM;
+			return FSM_MENU_INFO;
 		}
 		break;
 
-	case R330_FSM:
+	case FSM_R330:
 		if (evento == TICK_100US) {
 			ultima_muestra = ADC_muestrear(32);
 			if (ultima_muestra > VCC_AL_95_PORCIENTO) {
 				set_resistencia(RESISTOR_10K);
-				return R10K_FSM;
+				return FSM_R10K;
 			}
 
 			r_medida = (VALOR_RESISTOR_330_OHMS * ultima_muestra) / (VCC_MV - ultima_muestra);
 			config.unidad = OHMS;
 			UART_mostrar_menu(MENU_R);
 			contador_timer_100ms = 0;
-			return R_MOSTRAR_FSM;
+			return FSM_MOSTRAR_R;
 
 		} else if (evento == BTN_MENU) {
 			UART_mostrar_menu(MENU_INFO);
-			return MENU_INFO_FSM;
+			return FSM_MENU_INFO;
 		}
 		break;
 
-	case R10K_FSM:
+	case FSM_R10K:
 		if (evento == TICK_100US) {
 			ultima_muestra = ADC_muestrear(32);
 			if (ultima_muestra > VCC_AL_95_PORCIENTO) {
 				set_resistencia(RESISTOR_1M);
-				return R1M_FSM;
+				return FSM_R1M;
 			}
 
 			r_medida = (VALOR_RESISTOR_10K_OHMS * ultima_muestra) / (VCC_MV - ultima_muestra);
@@ -674,15 +685,15 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 			UART_mostrar_menu(MENU_R);
 
 			contador_timer_100ms = 0;
-			return R_MOSTRAR_FSM;
+			return FSM_MOSTRAR_R;
 
 		} else if (evento == BTN_MENU) {
 			UART_mostrar_menu(MENU_INFO);
-			return MENU_INFO_FSM;
+			return FSM_MENU_INFO;
 		}
 		break;
 
-	case R1M_FSM:
+	case FSM_R1M:
 		if (evento == TICK_100US) {
 			ultima_muestra = ADC_muestrear(32);
 			if (ultima_muestra < VCC_AL_95_PORCIENTO) {
@@ -695,23 +706,23 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 			UART_mostrar_menu(MENU_R);
 
 			contador_timer_100ms = 0;
-			return R_MOSTRAR_FSM;
+			return FSM_MOSTRAR_R;
 
 		} else if (evento == BTN_MENU) {
 			UART_mostrar_menu(MENU_INFO);
-			return MENU_INFO_FSM;
+			return FSM_MENU_INFO;
 		}
 		break;
 
-	case R_MOSTRAR_FSM:
+	case FSM_MOSTRAR_R:
 		if (evento == TICK_100MS && config.modo == CONTINUO) {
 			set_resistencia(RESISTOR_330);
-			return R330_FSM;
+			return FSM_R330;
 		} else if (evento == BTN_MENU) {
 			UART_mostrar_menu(MENU_INFO);
-			return MENU_INFO_FSM;
+			return FSM_MENU_INFO;
 		}
-		return R_MOSTRAR_FSM;
+		return FSM_MOSTRAR_R;
 	}
 	return state;
 }
@@ -831,7 +842,7 @@ uint32_t ADC_muestrear(uint32_t cantidad_muestras) {
 	}
 
 	//Convierto a mV, calculo promedio y retorno
-	return (acc * (uint32_t)3300) / ((uint32_t)4095 * cantidad_muestras);
+	return (acc * 3300) / (4095 * cantidad_muestras);
 }
 
 void set_resistencia(OutputResistor_Type resistorType){
