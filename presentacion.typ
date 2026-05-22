@@ -1,5 +1,12 @@
 #import "@preview/typslides:1.3.3": *
 
+#let slide-title(t: text) = [
+  #set align(center)
+  #set text(size: 30pt)
+  #stress(t)
+  #set text(size: 20pt)
+]
+
 // Project configuration
 #show: typslides.with(
   ratio: "16-9",
@@ -264,7 +271,121 @@ Y por otro lado, es también configurable el parámetro a medir:\
 
 ]
 
+#slide(title: "Resolución gráfico error en medición", outlined: true)[
+
+  #grid(columns: (1fr, 1fr), 
+  gutter: 1cm,
+  [
+    A continuación se detalla lo que se quería transmitir con el gráfico de geogebra de la presentación.
+  ],[
+    #box(image("grafico_vm.png", height: 7cm, width: 10cm), height: 10cm, clip: true, inset: (
+      bottom: 0cm,
+      left: 0cm,
+    ))
+  ])
+
+]
+
+#slide(title: "Resolución gráfico error en medición", outlined: true)[
+
+  #slide-title(t: "Error relativo en medición resistiva con divisor")
+
+  Partimos del divisor resistivo:
+
+  $
+  V_"out" = V_"in" * R_x / (R + R_x)
+  $
+
+  Despejando $R_x$:
+
+  $
+  R_x = R * V_"out" / (V_"in" - V_"out")
+  $
+
+]
+
+
+
+#slide(title: "Resolución gráfico error en medición", outlined: true)[
+
+  #slide-title(t: "Propagación de error")
+
+  El error relativo aproximado resulta:
+
+  $
+  (Delta R_x) / R_x approx (Delta R) / R +
+  V_"in" / (V_"out" (V_"in" - V_"out")) * Delta V
+  $
+
+  Si definimos el error relativo de tensión como:
+
+  $
+  epsilon_V = (Delta V) / V_"in"
+  $
+
+  y además:
+
+  $
+  x = V_"out" / V_"in"
+  $
+
+  entonces el error propagado es:
+
+  $ (Delta R_x) / R_x approx (Delta R) / R + 1 / (x (1 - x)) * epsilon_V $
+
+]
+
+#slide(title: "Resolución gráfico error en medición", outlined: true)[
+  #slide-title(t: "Conclusiones del error")
+
+  El término:
+
+  $
+  1 / (x (1 - x))
+  $
+
+  crece mucho cuando:
+
+- $x -> 0$
+- $x -> 1$
+
+Es decir:
+
+- cuando $R_x << R$
+- o cuando $R_x >> R$
+
+el error aumenta considerablemente.
+
+El error es mínimo cuando:
+
+$
+V_"out" = V_"in" / 2
+$
+
+lo cual ocurre cuando:
+
+$
+R_x = R
+$
+
+Por eso normalmente se elige la resistencia fija del divisor
+del mismo orden que la resistencia a medir. \
+
+Todo esto se grafica a continación para que se pueda apreciar mejor
+]
+
+#slide(title: "Resolución gráfico error en medición", outlined: true)[
+  #set align(center)
+  #box(image("error_rel.png", height: 10cm), clip: true, inset: (
+    bottom: 0cm,
+    left: 0cm,
+  ))
+]
+
+#slide(title: "Resolución gráfico error en medición", outlined: true)[
+  Como se ve en el gráfico anterior, el error es mínimo cuando la relación $x = V_"out" / V_"in" = 0.5$ \
+  *Es decir las resistencias son iguales*
+]
 
 #let bib = bibliography("bibliography.bib")
 // #bibliography-slide(bib)
-
