@@ -124,13 +124,8 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento);
 // Imprime por UART el menu pasado como parametro
 void UART_mostrar_menu(Menu_t menu);
 
-//
-//Comando_t UART_leer_comando(UART_HandleTypeDef *handle_uart);
+
 uint32_t ADC_muestrear(uint32_t cantidad_muestras);
-//void set_configuracion(Configurables_t configurable, Comando_t comando);
-//void medir_c(ADC_HandleTypeDef *handle_adc);
-//void medir_r(ADC_HandleTypeDef *handle_adc);
-//void uart_leer_comando_it();
 int procesar_comando(void);
 void set_resistencia(OutputResistor_Type resistorType);
 
@@ -612,7 +607,7 @@ FSM_State FSM_General(FSM_State state, FSM_Signals evento) {
 			if ((ADC_muestrear(1) >= VCC_AL_63_PORCIENTO) && contador_capacitor < MAX_CUENTAS_CARGA) {
 
 				config.unidad = NANO_FARADIOS;
-//				c_medida = CALCULAR_CAPACIDAD(contador_capacitor);
+//				c_medida = CALCULAR_CAPACIDAD(contador_capacitor); // Solucion a: qué pasa si 1M no es 1M exactamente
 				c_medida = contador_capacitor;
 				UART_mostrar_menu(MENU_C);
 				HAL_GPIO_WritePin(GPIO1M_GPIO_Port, GPIO1M_Pin, GPIO_PIN_RESET);
