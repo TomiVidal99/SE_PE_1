@@ -64,9 +64,9 @@ Y por otro lado, es también configurable el parámetro a medir:\
 - Microcontrolador STM32F103C8T6
 - 1 botón normalmente abierto
 - 3 Resistencias de:
-- 330ohm
-- 10kohm
-- 1Mohm
+- $330#math.Omega$
+- $10K#math.Omega$
+- $1M#math.Omega$
 - Terminal para colocar el DUT
 ]
 
@@ -142,7 +142,7 @@ Y por otro lado, es también configurable el parámetro a medir:\
 
 #slide(title: "Solución software", outlined: true)[
   #set align(center)
-  #image("DIAGRAMAS/FSM.svg", height: 14cm)
+  #image("DIAGRAMAS/FSM.png", height: 14cm)
 
 ]
 
@@ -236,6 +236,22 @@ Y por otro lado, es también configurable el parámetro a medir:\
   En caso de que el modo sea continuo, se comienza un bucle infinito medir-mostrar cada 100ms, hasta que se presione el botón una vez más para salir y volver al menú info.
 
 ]
+
+// #slide(title: "Solución software", outlined: true)[
+//
+//   #set text(size: 30pt)
+//   #stress("Posibles mejoras")
+//   #set text(size: 20pt)
+//
+//   - Accessos rápidos con teclas especiales: 
+//     - 'r': Modo *resistencia*.
+//     - 'c': Modo *capacidad*.
+//     - 'u': Modo *único*.
+//     - 'p': Modo *periódico*.
+//
+//   - 
+//
+// ]
 
 #let bib = bibliography("bibliography.bib")
 // #bibliography-slide(bib)
