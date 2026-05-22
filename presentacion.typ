@@ -237,21 +237,33 @@ Y por otro lado, es también configurable el parámetro a medir:\
 
 ]
 
-// #slide(title: "Solución software", outlined: true)[
-//
-//   #set text(size: 30pt)
-//   #stress("Posibles mejoras")
-//   #set text(size: 20pt)
-//
-//   - Accessos rápidos con teclas especiales: 
-//     - 'r': Modo *resistencia*.
-//     - 'c': Modo *capacidad*.
-//     - 'u': Modo *único*.
-//     - 'p': Modo *periódico*.
-//
-//   - 
-//
-// ]
+#slide(title: "Solución software", outlined: true)[
+
+  #set text(size: 30pt)
+  #stress("Posibles mejoras")
+  #set text(size: 20pt)
+
+  - Accessos rápidos con teclas especiales: 
+    - 'r': Modo *resistencia*.
+    - 'c': Modo *capacidad*.
+    - 'u': Modo *único*.
+    - 'p': Modo *periódico*.
+
+  - Inicializar periféricos (baremetal)
+  - Medir tensión
+  - Agregar un modo de auto escala para capacidad
+
+]
+
+#slide(title: "Solución software", outlined: true)[
+
+  #set align(center)
+  #set text(size: 30pt)
+  #stress("FIN")
+  #set text(size: 20pt)
+
+]
+
 
 #let bib = bibliography("bibliography.bib")
 // #bibliography-slide(bib)
