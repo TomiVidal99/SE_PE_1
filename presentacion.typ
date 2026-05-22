@@ -266,7 +266,7 @@ Y por otro lado, es también configurable el parámetro a medir:\
 
   #set align(center)
   #set text(size: 30pt)
-  #stress("FIN")
+  #stress("Correcciones después de la presentación individual")
   #set text(size: 20pt)
 
 ]
@@ -389,3 +389,12 @@ Todo esto se grafica a continación para que se pueda apreciar mejor
 
 #let bib = bibliography("bibliography.bib")
 // #bibliography-slide(bib)
+
+#slide(title: "Solución software", outlined: true)[
+
+  #set align(center)
+  #set text(size: 30pt)
+  #stress("FIN")
+  #set text(size: 20pt)
+
+]
